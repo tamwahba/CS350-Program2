@@ -2,11 +2,13 @@
 #define _IMAP_H
 
 #include <vector>
+#include <iostream>
 
 class IMap {
-    private:
+    public:
         std::vector<unsigned int> iNodes;
-
+        friend std::istream& operator>>(std::istream& input, IMap& iMap);
+        friend std::ostream& operator<<(std::ostream& output, const IMap& iMap);            
 };
 
 #endif
