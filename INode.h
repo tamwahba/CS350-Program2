@@ -1,9 +1,12 @@
 #ifndef _INODE_H_
 #define _INODE_H_
 
+#include "Block.h"
+#include <string>
+
 class INode {
 private:
-    string fileName;
+    std::string fileName;
     int fileSize; //in blocks
     Block *blockPointers[128];
 

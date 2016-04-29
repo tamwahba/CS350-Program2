@@ -1,3 +1,10 @@
+#ifndef _SEGMENT_H_
+#define _SEGMENT_H_
+
+#include "SummaryBlock.h"
+#include "Block.h"
+#include "INode.h"
+
 class Segment {
 private:
     SummaryBlock SSB;
@@ -9,4 +16,6 @@ public:
     Segment();
     ~Segment();
 
-}
+};
+
+#endif
