@@ -4,7 +4,9 @@
 #include <vector>
 #include <iostream>
 
-class IMap {
+#include "Block.h"
+
+class IMap: public Block {
     public:
         std::vector<unsigned int> iNodes;
         friend std::istream& operator>>(std::istream& input, IMap& iMap);

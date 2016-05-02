@@ -5,7 +5,8 @@
 #include <iostream>
 
 class Block {
-    private:
+    protected:
+        int blockSize = 1024;
         std::string blockString;
     public:
         friend std::istream& operator>>(std::istream& input, Block& block);
