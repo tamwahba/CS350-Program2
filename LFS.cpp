@@ -30,7 +30,6 @@ LFS::LFS() {
 
 void LFS::import(std::string lfsFilename, std::string data) {
    //unsigned int numDataBlocks = data.size.length() / 1024; 
-
 }
 
 std::string LFS::list() {
@@ -89,3 +88,4 @@ void LFS::flush() {
 
 
 }*/
+
