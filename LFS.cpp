@@ -28,7 +28,7 @@ LFS::LFS() {
     }
 }
 
-void LFS::import(std::string lfsFilename, std::string data) {
+void LFS::import(std::string lfsFilename, std::istream& data) {
    //unsigned int numDataBlocks = data.size.length() / 1024; 
 }
 
