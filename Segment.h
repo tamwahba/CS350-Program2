@@ -8,12 +8,12 @@
 #include <vector>
 
 class Segment {
-private:
+public:
     SummaryBlock SSB;
     std::vector<Block> blocks; //max 1023
     int counter;
 
-public:
+
     friend std::istream& operator>>(std::istream& input, Segment& segment);
     friend std::ostream& operator<<(std::ostream& output, const Segment& segment);
     void clean();    
