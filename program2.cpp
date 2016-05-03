@@ -2,34 +2,34 @@
 #include <cstring>
 #include <ctime>
 #include <cstdlib>
+#include <fstream>
 
-using namespace std;
+#include "LFS.h"
 
 void print_usage()
 {
-
-    cout<<"Usage:\n"<<endl;
-    cout<<"program2 LFS"<<endl;
-    cout<<"\n"<<endl;
-    cout<<"-U     Print this Usage\n"<<endl;
-    cout<<"\n"<<endl;
-    cout<<"import <filename> <lfs_filename> \n"<<endl;
-    cout<<"remove <lfs_filename>\n"<<endl;
-    cout<<"cat <lfs_filename>\n"<<endl;
-    cout<<"display <lfs_filename> <howmany> <start>\n"<<endl;
-    cout<<"overwrite <lfs_filename> <howmany> <start> <c>\n"<<endl;
-    cout<<"list\n"<<endl;
-    cout<<"exit\n"<<endl;
-    cout<<"\n"<<endl;
-
+    std::cout << "Usage:\n" << std::endl;
+    std::cout << "program2 LFS" << std::endl;
+    std::cout << "\n" << std::endl;
+    std::cout << "-U     Print this Usage\n" << std::endl;
+    std::cout << "\n" << std::endl;
+    std::cout << "import <filename> <lfs_filename> \n" << std::endl;
+    std::cout << "remove <lfs_filename>\n" << std::endl;
+    std::cout << "cat <lfs_filename>\n" << std::endl;
+    std::cout << "display <lfs_filename> <howmany> <start>\n" << std::endl;
+    std::cout << "overwrite <lfs_filename> <howmany> <start> <c>\n" << std::endl;
+    std::cout << "list\n" << std::endl;
+    std::cout << "exit\n" << std::endl;
+    std::cout << "\n" << std::endl;
 }
 
 int main(int argc, char* argv[]) 
 {
-
+    LFS disk;
     while (true)
     {
-
+        std::cout << "> ";
+        
         std::string command;
 
         std::cin >> command;
@@ -43,47 +43,48 @@ int main(int argc, char* argv[])
 
             std::cin >> filename >> lfs_filename;
 
+            std::ifstream dataStream(filename);
+            disk.import(lfs_filename, dataStream);
         }
-         else if(command == "remove"){
+        else if(command == "remove"){
             std::string lfs_filename;
-        }
 
+            std::cin >> lfs_filename;
+            disk.remove(lfs_filename);
+        }
         else if (command == "cat") {
             std::string lfs_filename;
 
             std::cin >> lfs_filename;
 
         } 
-
         else if (command == "display") {
             std::string lfs_filename;
             int howmany;
             int start;
 
             std::cin >> lfs_filename;
-
+            std::cin >> howmany >> start;
         }
-
         else if (command == "overwrite") {
             std::string lfs_filename;
             int howmany;
             int start;
-            int c;
+            char c;
 
             std::cin >> lfs_filename;
-            cin>> howmany>>start>>c;
+            std::cin >> howmany >> start >> c;
 
         }
-
-        if (command == "exit")
+        else if (command == "exit")
         {
+            disk.flush();
             exit(0);
         } 
         else if (command == "list") {
-            ///do that
+            std::cout << disk.list() << std::endl;
         } else {
             std::cerr << "Invalid command: " << command << std::endl;
-                break;
         }
     }
 

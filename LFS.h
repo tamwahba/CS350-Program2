@@ -1,6 +1,7 @@
 #ifndef _LFS_H_
 #define _LFS_H_
 
+#include <istream>
 #include <string>
 #include <map>
 #include <vector>
@@ -13,7 +14,7 @@ class LFS {
     public:
         LFS();
 
-        void import(std::string lfsFilename, std::string data);
+        void import(std::string lfsFilename, std::istream &data);
         std::string list();
         void remove(std::string lfsFilename);
         //std::string cat(std::string lfsFilename);
