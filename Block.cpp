@@ -11,7 +11,9 @@ std::istream& operator>>(std::istream& input, Block& block) {
 
 std::ostream& operator<<(std::ostream& output, const Block& block) {
     output.write(block.blockString.c_str(), block.blockString.length());
-    output.write(NULL, block.blockSize - block.blockString.length());
+    for(unsigned i = 0; i < block.blockSize - block.blockString.length(); i++) {
+        output.put('\0');
+    }
     return output;
 }
 
