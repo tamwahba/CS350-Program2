@@ -14,11 +14,11 @@ LFS::LFS() {
         std::cout << "Passing data to segment " << i << std::endl;
         if(SEGMENT.peek() == std::ifstream::traits_type::eof()) {
             SEGMENT.close();
-            std::ofstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
+            std::ofstream SEGMENT2("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
             for(int j = 0; j < 32 * 1024; j++) {
-                SEGMENT.put('\0');
+                SEGMENT2.put('\0');
             }
-            SEGMENT.close();
+            SEGMENT2.close();
             SEGMENT.open("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out);
         }
         SEGMENT >> segments[i];
