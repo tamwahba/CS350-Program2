@@ -45,9 +45,9 @@ LFS::LFS() {
     std::cout << "Constructing the file map" << std::endl;
     //Construct the file map
     for(auto i: checkpoint) {
-        IMap* iMap = static_cast<IMap*>(&segments[i >> 10].blocks[i && 0x3FF]);
+        IMap* iMap = static_cast<IMap*>(getBlock(i));
         for(auto j: iMap->iNodes) {
-            INode* iNode = static_cast<INode*>(&segments[j >> 10].blocks[j && 0x3FF]);
+            INode* iNode = static_cast<INode*>(getBlock(j));
             std::string fileName = iNode->fileName;
             files[fileName] = j;
         }
@@ -68,7 +68,9 @@ void LFS::updateClean() {
     }
 }
 
-
+Block* LFS::getBlock(unsigned int address) {
+    return &segments[address >> 10].blocks[address & 0x3FF];
+}
 
 void LFS::import(std::string lfsFilename, std::istream& data) {
     INode iNode;
@@ -89,7 +91,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
         IMap* iMap;
         if((files.size() / 256) < checkpoint.size()) {
             unsigned int iMapAddress = checkpoint[files.size() / 256];
-            iMap = static_cast<IMap*>(&segments[iMapAddress >> 10].blocks[iMapAddress & 0x3FF]);
+            iMap = static_cast<IMap*>(getBlock(iMapAddress));
         } else {
             checkpoint.push_back(0);
             iMap->iNodes.push_back(0);
@@ -109,7 +111,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
     IMap* iMap = new IMap();
     if((files.size() / 256) < checkpoint.size()) {
         unsigned int iMapAddress = checkpoint[files.size() / 256];
-        iMap = static_cast<IMap*>(&segments[iMapAddress >> 10].blocks[iMapAddress & 0x3FF]);
+        iMap = static_cast<IMap*>(getBlock(iMapAddress));
     } else {
         checkpoint.push_back(0);
         iMap->iNodes.push_back(0);
@@ -128,7 +130,7 @@ std::string LFS::list() {
     //For each INode in
     std::stringstream list;
     for(auto& i: files) {
-        INode* iNode = static_cast<INode*>(&segments[i.second >> 10].blocks[i.second & 0x3FF]);
+        INode* iNode = static_cast<INode*>(getBlock(i.second));
         list << iNode->fileName << " " << iNode->fileSize << std::endl;
     }
     return list.str();
@@ -140,7 +142,7 @@ void LFS::remove(std::string lfsFilename) {
     bool found = false;
     //each IMap piece
     for(unsigned int i = 0; i < checkpoint.size() && !found; i++) { 
-        IMap* iMap = static_cast<IMap*>(&segments[i >> 10].blocks[i && 0x3FF]);
+        IMap* iMap = static_cast<IMap*>(getBlock(i));
         //each INode
         for(unsigned int j = 0; j < iMap->iNodes.size() && !found; j++) {
             if(iMap->iNodes[j] ==iNodeLoc) {
