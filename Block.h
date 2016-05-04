@@ -8,6 +8,9 @@ class Block {
     public:
         int blockSize = 1024;
         std::string blockString;
+
+        void overwite(char character, unsigned size);
+
         friend std::istream& operator>>(std::istream& input, Block& block);
         friend std::ostream& operator<<(std::ostream& output, const Block& block);
 };

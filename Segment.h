@@ -1,6 +1,7 @@
 #ifndef _SEGMENT_H_
 #define _SEGMENT_H_
 
+#include "LFS.h"
 #include "SummaryBlock.h"
 #include "Block.h"
 #include "INode.h"
@@ -8,16 +9,17 @@
 #include <vector>
 
 class Segment {
-public:
-    SummaryBlock SSB;
-    std::vector<Block> blocks; //max 1023
-    unsigned int maxBlocks = 1020;
+    public:
+        Segment(std::string fileName, unsigned blockSize, unsigned segmentSize);
+        bool addBlock(Block& block, unsigned int howMany);
+        unsigned deadBlockCount(LFS& fileSystem);
+        void write();
+        
+        std::vector<Block> blocks; //size 1024; 0 - 1023
 
-    
-    friend std::istream& operator>>(std::istream& input, Segment& segment);
-    friend std::ostream& operator<<(std::ostream& output, const Segment& segment);
-    bool addBlock(Block& block, unsigned int howMany);
-    void clean();    
+    private:
+        unsigned maxBlocks;
+        std::ofstream file;
 };
 
 #endif

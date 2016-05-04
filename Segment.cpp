@@ -1,5 +1,15 @@
 #include "Segment.h"
 
+Segment::Segment(std::string fileName, unsigned blockSize, unsigned segmentSize) {
+
+}
+
+void Segment::wrtie() {
+    for (auto block: blocks) {
+        file << block;
+    }
+}
+
 std::istream& operator>>(std::istream& input, Segment& segment) {
     input >> segment.SSB;
     std::cout << "Constructing each block" << std::endl;
@@ -9,7 +19,6 @@ std::istream& operator>>(std::istream& input, Segment& segment) {
     }
     return input;
 }
-
 
 std::ostream& operator<<(std::ostream& output, const Segment& segment) {
     output << segment.SSB;
