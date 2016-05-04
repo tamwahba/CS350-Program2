@@ -1,20 +1,55 @@
 #include "IMap.h"
 
-std::istream& operator>>(std::istream& input, IMap& iMap) {
-    for (int i = 0; i < iMap.blockSize; ++i) {
-        unsigned int val;
-        input.read((char *)&val, sizeof(unsigned int));
-        iMap.iNodes[i] = val;
-    }
-    return input;
+IMap::IMap()
+    : Block(),
+    currentIdx{0},
+    freeCount{blockSize} {
+    
 }
 
-std::ostream& operator<<(std::ostream& output, const IMap& iMap) {
-    for (auto iter = iMap.iNodes.begin(); iter != iMap.iNodes.end(); ++iter) {
-        unsigned int val = *iter;
-        output.write((char *)(&val), sizeof(unsigned int));
+IMap::IMap(Block& b)
+    : Block(),
+    currentIdx{0},
+    freeCount{blockSize} {
+        for (unsigned i = 0; i < blockSize; i++) {
+            data[i] = b.data[i];
+            if (data[i] != '\0') {
+                freeCount--;
+                currentIdx = i;
+            }
+        }
     }
-    return output;
+
+unsigned IMap::addINodeWithAddress(unsigned address) {
+    if (currentIdx < blockSize) {
+        data[currentIdx] = address;
+        currentIdx++;
+        freeCount--;
+    }
+    return currentIdx - 1;
+}
+
+void IMap::updateINodeAddressAtIndex(unsigned address, unsigned index) {
+    data[index] = address;
 }
 
 
+void IMap::removeINodeAtIndex(unsigned index) {
+    data[index] = '\0';
+}
+
+// bool hasFreeIndecies() {
+//     return freeCount > 0;
+// }
+
+// unsigned findFreeIndex() {
+//     if (currentIdx < blockSize) {
+//         return currentIdx;
+//     }
+
+//     for (unsigned i = 0; i < blockSize; i++) {
+//         if (data[i] == '\0') {
+//             return i;
+//         }
+//     }
+// }

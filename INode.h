@@ -7,13 +7,19 @@
 #include <vector>
 
 class INode : public Block {
-public:
-    INode();
-    std::string fileName;
-    int fileSize; //in blocks
-    std::vector<unsigned int> blockIndices;
-    friend std::istream& operator>>(std::istream& input, INode& iNode);
-    friend std::ostream& operator<<(std::ostream& output, const INode& iNode);
+    private:
+        std::string fileName;
+        unsigned fileSize; //in blocks
+        unsigned currentIdx;
+        unsigned maxFileBlocks = 128;
+
+    public:
+        INode();
+        INode(std::string name);
+        INode(Block& b);
+
+        unsigned addBlockWithAddress(unsigned address);
+        void updateBlockAddressAtIndex(unsigned address, unsigned index);
 };
 
 #endif

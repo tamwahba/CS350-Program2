@@ -1,19 +1,26 @@
 #include "Block.h"
 
+Block::Block() {
+	data = new char[blockSize]();
+}
+
+Block::~Block() {
+	delete data;
+}
+
+void Block::overwite(char character, unsigned start, unsigned size) {
+	for(unsigned i = start; i < start + size; i++) {
+		data[i] = character;
+	}
+}
+
+
 std::istream& operator>>(std::istream& input, Block& block) {
-    char* buffer = new char[block.blockSize]();
-    input.read(buffer, block.blockSize);
-    block.blockString = std::string(buffer, block.blockSize);
-    delete buffer;
-    //if(block.blockString.length() != 0) std::cout << block.blockString;
+    input.read(block.data, block.blockSize);
     return input;
 }
 
 std::ostream& operator<<(std::ostream& output, const Block& block) {
-    output.write(block.blockString.c_str(), block.blockString.length());
-    for(int j = 0; j < block.blockSize - block.blockString.length(); j++) {
-        output.put('\0');
-    }
+    output.write(block.data, block.blockSize);
     return output;
 }
-
