@@ -11,7 +11,7 @@ program2:	$(OBJECTS)
 	$(CC) $(CPPFLAGS) -c $?
 
 clean:
-	rm -f *.o *.gch *.tar.gz program2
+	rm -f *.o *.gch *.tar.gz ./DRIVE/* program2
 
 tar:	clean
 	tar -zcvf program2.tar.gz *.cpp *.h README.md
