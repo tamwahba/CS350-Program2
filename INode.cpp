@@ -1,5 +1,10 @@
 #include "INode.h"
 
+INode::INode() {
+    blockIndices.resize(128);
+    fileSize = 0;
+}
+
 std::istream& operator>>(std::istream& input, INode& iNode) {
     for (int i = 0; i < iNode.blockSize; ++i) {
         unsigned int val;

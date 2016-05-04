@@ -2,8 +2,9 @@
 
 std::istream& operator>>(std::istream& input, Segment& segment) {
     input >> segment.SSB;
-    for (int i = 0; i < 1023; i++) {
-        segment.blocks[i] = Block();
+    std::cout << "Constructing each block" << std::endl;
+    for (unsigned int i = 0; i < segment.maxBlocks; i++) {
+        segment.blocks.push_back(Block());
         input >> segment.blocks[i];
     }
     return input;
@@ -18,3 +19,10 @@ std::ostream& operator<<(std::ostream& output, const Segment& segment) {
     return output;
 }
 
+bool Segment::addBlock(Block& block, unsigned int howMany) {
+    if(blocks.size() + howMany < maxBlocks) {
+        blocks.push_back(block);
+        return true;
+    }
+    return false;
+}

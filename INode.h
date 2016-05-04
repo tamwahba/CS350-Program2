@@ -8,6 +8,7 @@
 
 class INode : public Block {
 public:
+    INode();
     std::string fileName;
     int fileSize; //in blocks
     std::vector<unsigned int> blockIndices;

@@ -26,6 +26,7 @@ void print_usage()
 int main(int argc, char* argv[]) 
 {
     LFS disk;
+    std::cout << "here\n";
     while (true)
     {
         std::cout << "> ";
@@ -43,7 +44,7 @@ int main(int argc, char* argv[])
 
             std::cin >> filename >> lfs_filename;
 
-            std::ifstream dataStream(filename);
+            std::ifstream dataStream(filename, std::ios::in | std::ios::binary);
             disk.import(lfs_filename, dataStream);
         }
         else if(command == "remove"){

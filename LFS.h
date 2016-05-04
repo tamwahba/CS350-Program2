@@ -16,6 +16,12 @@ class LFS {
         std::map<std::string, int> files;
         std::vector<Segment> segments;
         std::vector<unsigned int> checkpoint;
+        std::vector<unsigned int> isClean; 
+        unsigned int current;
+        unsigned int numClean;
+        unsigned int blockIndex;
+
+        void updateClean();
 
     public:
         LFS();

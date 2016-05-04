@@ -5,6 +5,7 @@ std::istream& operator>>(std::istream& input, Block& block) {
     input.read(buffer, block.blockSize);
     block.blockString = std::string(buffer, block.blockSize);
     delete buffer;
+    //if(block.blockString.length() != 0) std::cout << block.blockString;
     return input;
 }
 
