@@ -3,9 +3,9 @@
 std::istream& operator>>(std::istream& input, Block& block) {
     char* buffer = new char[block.blockSize]();
     input.read(buffer, block.blockSize);
-    block.blockString = std::string(buffer, block.blockSize);
+    block.blockString = std::string(buffer);
     delete buffer;
-    //if(block.blockString.length() != 0) std::cout << block.blockString;
+    if(block.blockString.length() != 0) std::cout << block.blockString;
     return input;
 }
 
