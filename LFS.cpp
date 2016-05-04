@@ -6,6 +6,7 @@ LFS::LFS() {
     blockIndex = 0;
     isClean.resize(32, 1);
     //Construct each segment
+    mkdir("DRIVE",  S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     for(int i = 0; i < 32; i++) {
         std::cout << "Constructing segment " << i + 1 << std::endl;
         segments.push_back(Segment());
@@ -129,6 +130,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
 std::string LFS::list() {
     //For each INode in
     std::stringstream list;
+    std::cout << "Number of files: " << files.size() << std::endl;
     for(auto& i: files) {
         INode* iNode = static_cast<INode*>(getBlock(i.second));
         list << iNode->fileName << " " << iNode->fileSize << std::endl;

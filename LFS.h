@@ -4,6 +4,7 @@
 #include "Segment.h"
 #include "IMap.h"
 #include "INode.h"
+#include <sys/stat.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
