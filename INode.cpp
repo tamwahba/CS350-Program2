@@ -24,8 +24,9 @@ std::ostream& operator<<(std::ostream& output, const INode& iNode) {
         output.write((char *)&val, sizeof(unsigned int));
     }
     output.write(iNode.fileName.c_str(), iNode.fileName.length());
-    output.write(NULL,
-            iNode.blockSize - iNode.blockIndices.size() - iNode.fileName.size());
+    for(int i = 0; i < iNode.blockSize - iNode.blockIndices.size() - iNode.fileName.size(); i++) {
+        output.put('\0');
+    }
     
     return output;
 }

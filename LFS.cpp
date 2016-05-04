@@ -70,26 +70,29 @@ void LFS::updateClean() {
 }
 
 Block* LFS::getBlock(unsigned int address) {
-    return &segments[address >> 10].blocks[address & 0x3FF];
+    return segments[address >> 10].blocks[address & 0x3FF];
 }
 
 void LFS::import(std::string lfsFilename, std::istream& data) {
-    INode iNode;
-    iNode.fileName = lfsFilename;
+    INode* iNode = new INode();
+    iNode->fileName = lfsFilename;
     Block block;
     data >> block;
+    std::cout << "BlockIndex: " << blockIndex << std::endl;
     unsigned int address = (current << 10) + blockIndex;
     do {
-        std::cout << "Adding data to block" << std::endl;
+        iNode->fileSize++;     
         address = (current << 10) + blockIndex;
-        iNode.blockIndices[blockIndex] = address;
+        iNode->blockIndices[blockIndex] = address;
         blockIndex++;
-        if(!segments[current].addBlock(block, 2)) continue;
-
+        
+        bool remSpace = segments[current].addBlock(block, 2);
+        if(remSpace) continue;
+        
         std::cout << "Section 2" << std::endl;
-        segments[current].addBlock(iNode, 1);
+        segments[current].addBlock(*iNode, 1);
         files[lfsFilename] = address + 1;
-        IMap* iMap;
+        IMap* iMap = new IMap();
         if((files.size() / 256) < checkpoint.size()) {
             unsigned int iMapAddress = checkpoint[files.size() / 256];
             iMap = static_cast<IMap*>(getBlock(iMapAddress));
@@ -107,7 +110,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
         isClean[current] = 0;
     } while(data >> block);
 
-    segments[current].addBlock(iNode, 1);
+    segments[current].addBlock(*iNode, 1);
     files[lfsFilename] = address + 1;
     IMap* iMap = new IMap();
     if((files.size() / 256) < checkpoint.size()) {
@@ -121,10 +124,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
     segments[current].addBlock(*iMap, 0);
     checkpoint[files.size() / 256] = address + 2;
     flush();
-
-    blockIndex = 0;
-    updateClean();
-    isClean[current] = 0;
+    blockIndex += 2;
 }
 
 std::string LFS::list() {
@@ -132,6 +132,7 @@ std::string LFS::list() {
     std::stringstream list;
     std::cout << "Number of files: " << files.size() << std::endl;
     for(auto& i: files) {
+        std::cout << "File " << i.second << ": " << std::endl;
         INode* iNode = static_cast<INode*>(getBlock(i.second));
         list << iNode->fileName << " " << iNode->fileSize << std::endl;
     }
@@ -147,7 +148,7 @@ void LFS::remove(std::string lfsFilename) {
         IMap* iMap = static_cast<IMap*>(getBlock(i));
         //each INode
         for(unsigned int j = 0; j < iMap->iNodes.size() && !found; j++) {
-            if(iMap->iNodes[j] ==iNodeLoc) {
+            if(iMap->iNodes[j] == iNodeLoc) {
                 iMap->iNodes.erase(iMap->iNodes.begin() + j);
                 found = true;
             }
