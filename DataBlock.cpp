@@ -4,7 +4,7 @@ std::istream& operator>>(std::istream& input, DataBlock& block) {
     char* buffer = new char[block.blockSize]();
     input.read(buffer, block.blockSize);
     block.blockString = std::string(buffer, block.blockSize);
-    delete buffer;
+    delete[] buffer;
     return input;
 }
 
