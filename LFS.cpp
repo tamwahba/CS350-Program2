@@ -186,7 +186,7 @@ void LFS::flush() {
     for(int i = 0; i < 32; i++) {
         std::ofstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::out | std::ios::trunc | std::ios::binary);
         std::cout << "Writing Segment " << i << std::endl;
-        SEGMENT << segments[i];
+        SEGMENT << *segments[i];
         SEGMENT.close();
     }
     std::ofstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::out | std::ios::trunc | std::ios::binary);
