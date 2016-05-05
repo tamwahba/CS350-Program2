@@ -13,7 +13,7 @@
 class LFS {
     private:
         std::map<std::string, int> files;
-        std::vector<Segment> segments;
+        std::vector<Segment*> segments;
         std::vector<unsigned int> checkpoint;
         std::vector<unsigned int> isClean; 
         unsigned int current;

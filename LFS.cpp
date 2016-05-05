@@ -9,9 +9,10 @@ LFS::LFS() {
     mkdir("DRIVE",  S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     for(int i = 0; i < 32; i++) {
         std::cout << "Constructing segment " << i + 1 << std::endl;
-        segments.push_back(Segment());
+        Segment* segment = new Segment();
+        segments.push_back(segment);
         std::fstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out);
-        std::cout << "Passing data to segment " << i << std::endl;
+        std::cout << "Passing data to segment " << i + 1 << std::endl;
         if(SEGMENT.peek() == std::ifstream::traits_type::eof()) {
             SEGMENT.close();
             std::ofstream SEGMENT2("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
@@ -21,7 +22,7 @@ LFS::LFS() {
             SEGMENT2.close();
             SEGMENT.open("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out);
         }
-        SEGMENT >> segments[i];
+        SEGMENT >> *segment;
         SEGMENT.close();
     }
 
@@ -41,7 +42,7 @@ LFS::LFS() {
     unsigned int tempIndex = 0;
     for(int i = 0; i < 32 && CHECKPOINT_REGION.read((char*)&tempIndex, sizeof(unsigned)); i++) {
         isClean[i] = tempIndex;
-        std::cout << tempIndex << std::endl;
+        //std::cout << tempIndex << std::endl;
     }
     while(CHECKPOINT_REGION.read((char*)&tempIndex, sizeof(unsigned))) {
         if (tempIndex > 0) {
@@ -76,7 +77,7 @@ void LFS::updateClean() {
 }
 
 Block* LFS::getBlock(unsigned int address) {
-    return segments[address >> 10].blocks[address & 0x3FF];
+    return segments[address >> 10]->blocks[address & 0x3FF];
 }
 
 void LFS::import(std::string lfsFilename, std::istream& data) {
@@ -92,11 +93,12 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
         iNode->blockIndices[blockIndex] = address;
         blockIndex++;
         
-        bool remSpace = segments[current].addBlock(block, 2);
+        Block *block2 = new Block(block);
+        bool remSpace = segments[current]->addBlock(*block2, 2);
         if(remSpace) continue;
         
         std::cout << "Section 2" << std::endl;
-        segments[current].addBlock(*iNode, 1);
+        segments[current]->addBlock(*iNode, 1);
         files[lfsFilename] = address + 1;
         IMap* iMap = new IMap();
         if((files.size() / 256) < checkpoint.size()) {
@@ -107,7 +109,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
             iMap->iNodes.push_back(0);
         }
         iMap->iNodes[files.size() % 256] = address + 1;
-        segments[current].addBlock(*iMap, 0);
+        segments[current]->addBlock(*iMap, 0);
         checkpoint[files.size() / 256] = address + 2;
         flush();
 
@@ -116,7 +118,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
         isClean[current] = 0;
     } while(data >> block);
 
-    segments[current].addBlock(*iNode, 1);
+    segments[current]->addBlock(*iNode, 1);
     files[lfsFilename] = address + 1;
     IMap* iMap = new IMap();
     if((files.size() / 256) < checkpoint.size()) {
@@ -127,7 +129,7 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
         iMap->iNodes.push_back(0);
     }
     iMap->iNodes[files.size() % 256] = address + 1;
-    segments[current].addBlock(*iMap, 0);
+    segments[current]->addBlock(*iMap, 0);
     checkpoint[files.size() / 256] = address + 2;
     flush();
     blockIndex += 2;
@@ -183,10 +185,12 @@ void LFS::remove(std::string lfsFilename) {
 void LFS::flush() {
     for(int i = 0; i < 32; i++) {
         std::ofstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::out | std::ios::trunc | std::ios::binary);
+        std::cout << "Writing Segment " << i << std::endl;
         SEGMENT << segments[i];
         SEGMENT.close();
     }
     std::ofstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::out | std::ios::trunc | std::ios::binary);
+    std::cout << "Writing CR" << std::endl;
     for(auto i: isClean) {
         std::cout << "WRITING CLEAN: " << i << std::endl; 
         CHECKPOINT_REGION.write((char*)&i, sizeof(unsigned));
