@@ -20,7 +20,9 @@ public:
     bool addBlock(Block& block, unsigned int howMany);
     bool addBlock(INode& block, unsigned int howMany);
     bool addBlock(IMap& block, unsigned int howMany);
-    void clean();    
+    void clean();   
+
+    ~Segment();
 };
 
 #endif
