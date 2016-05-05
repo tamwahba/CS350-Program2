@@ -172,8 +172,11 @@ void LFS::import(std::string lfsFilename, std::istream& data) {
         checkpoint.push_back(0);
         iMap->iNodes.push_back(0);
     }
+    int fileIndex = files.size() - 1 % 256;
+    std::cout << "FILE INDEX" << fileIndex << "ADDRESS" << address + 1 << std::endl;
     iMap->iNodes[(files.size() - 1) % 256] = address + 1;
-    segments[current]->addBlock(*iMap, 0);
+    std::cout << segments[current]->addBlock(*iMap, 0) << std::endl;
+    //std::cout << *((IMap*)segments[current]->blocks[address + 1]) << std::endl;
     checkpoint[(files.size() - 1) / 256] = address + 2;
     flush();
     blockIndex += 2;
