@@ -46,4 +46,9 @@ bool Segment::addBlock(IMap& block, unsigned int howMany) {
     } else return false;
 }
 
+Segment::~Segment() {
+    for(auto i : blocks)
+        delete i;
+}
+
 
