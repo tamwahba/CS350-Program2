@@ -1,159 +1,19 @@
 #include "LFS.h"
 
 LFS::LFS() {
-    current = 0;
-    numClean = 0;
-    blockIndex = 0;
-    isClean.resize(32, 1);
-    //Construct each segment
-    for(int i = 0; i < 32; i++) {
-        std::cout << "Constructing segment " << i + 1 << std::endl;
-        segments.push_back(Segment());
-        std::fstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out);
-        std::cout << "Passing data to segment " << i << std::endl;
-        if(SEGMENT.peek() == std::ifstream::traits_type::eof()) {
-            SEGMENT.close();
-            std::ofstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
-            for(int j = 0; j < 32 * 1024; j++) {
-                SEGMENT.put('\0');
-            }
-            SEGMENT.close();
-            SEGMENT.open("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out);
-        }
-        SEGMENT >> segments[i];
-    }
-
-    std::cout << "Constructing the CR" << std::endl;
-    //Construct the CR
-    std::ifstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::in | std::ios::binary);
-    if(CHECKPOINT_REGION.peek() == std::ifstream::traits_type::eof()) {
-        CHECKPOINT_REGION.close();
-        std::ofstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
-        for(int i = 0; i < 192; i++) {
-            CHECKPOINT_REGION.put('\0');
-        }
-        CHECKPOINT_REGION.close();
-        CHECKPOINT_REGION.open("DRIVE/CHECKPOINT_REGION", std::ios::binary | std::ios::in | std::ios::out);
-    }
-
-    unsigned int tempIndex = 0;
-    for(int i = 0; i < 32 && CHECKPOINT_REGION >> tempIndex; i++) {
-        isClean.push_back(tempIndex);
-        std::cout << tempIndex << std::endl;
-    }
-    while(CHECKPOINT_REGION >> tempIndex) checkpoint.push_back(tempIndex);
-    std::cout << "Constructing the file map" << std::endl;
-    //Construct the file map
-    for(auto i: checkpoint) {
-        IMap* iMap = static_cast<IMap*>(getBlock(i));
-        for(auto j: iMap->iNodes) {
-            INode* iNode = static_cast<INode*>(getBlock(j));
-            std::string fileName = iNode->fileName;
-            files[fileName] = j;
-        }
-    }
-    updateClean();
-    std::cout << "Finished constructing LFS" << std::endl;
 }
 
 void LFS::updateClean() {
-    bool found = false;
-    for(unsigned int i = current; i < 32 && !found; i++) {
-        if(isClean[i]) current = i;
-        found = true;
-    }
-    for(unsigned int i = 0; i < current && !found; i++) {
-        if(isClean[i]) current = i;
-        found = true;
-    }
-}
-
-Block* LFS::getBlock(unsigned int address) {
-    return &segments[address >> 10].blocks[address & 0x3FF];
 }
 
 void LFS::import(std::string lfsFilename, std::istream& data) {
-    INode iNode;
-    iNode.fileName = lfsFilename;
-    Block block;
-    data >> block;
-    unsigned int address = (current << 10) + blockIndex;
-    do {
-        std::cout << "Adding data to block" << std::endl;
-        address = (current << 10) + blockIndex;
-        iNode.blockIndices[blockIndex] = address;
-        blockIndex++;
-        if(!segments[current].addBlock(block, 2)) continue;
-
-        std::cout << "Section 2" << std::endl;
-        segments[current].addBlock(iNode, 1);
-        files[lfsFilename] = address + 1;
-        IMap* iMap;
-        if((files.size() / 256) < checkpoint.size()) {
-            unsigned int iMapAddress = checkpoint[files.size() / 256];
-            iMap = static_cast<IMap*>(getBlock(iMapAddress));
-        } else {
-            checkpoint.push_back(0);
-            iMap->iNodes.push_back(0);
-        }
-        iMap->iNodes[files.size() % 256] = address + 1;
-        segments[current].addBlock(*iMap, 0);
-        checkpoint[files.size() / 256] = address + 2;
-        flush();
-
-        blockIndex = 0;
-        updateClean();
-        isClean[current] = 0;
-    } while(data >> block);
-
-    segments[current].addBlock(iNode, 1);
-    files[lfsFilename] = address + 1;
-    IMap* iMap = new IMap();
-    if((files.size() / 256) < checkpoint.size()) {
-        unsigned int iMapAddress = checkpoint[files.size() / 256];
-        iMap = static_cast<IMap*>(getBlock(iMapAddress));
-    } else {
-        checkpoint.push_back(0);
-        iMap->iNodes.push_back(0);
-    }
-    iMap->iNodes[files.size() % 256] = address + 1;
-    segments[current].addBlock(*iMap, 0);
-    checkpoint[files.size() / 256] = address + 2;
-    flush();
-
-    blockIndex = 0;
-    updateClean();
-    isClean[current] = 0;
 }
 
 std::string LFS::list() {
-    //For each INode in
-    std::stringstream list;
-    for(auto& i: files) {
-        INode* iNode = static_cast<INode*>(getBlock(i.second));
-        list << iNode->fileName << " " << iNode->fileSize << std::endl;
-    }
-    return list.str();
+	return "";
 }
 
 void LFS::remove(std::string lfsFilename) {
-    //Find and erase the INode pointer of the file in the IMap
-    unsigned int iNodeLoc = files[lfsFilename];
-    bool found = false;
-    //each IMap piece
-    for(unsigned int i = 0; i < checkpoint.size() && !found; i++) { 
-        IMap* iMap = static_cast<IMap*>(getBlock(i));
-        //each INode
-        for(unsigned int j = 0; j < iMap->iNodes.size() && !found; j++) {
-            if(iMap->iNodes[j] ==iNodeLoc) {
-                iMap->iNodes.erase(iMap->iNodes.begin() + j);
-                found = true;
-            }
-        }
-    }
-
-    //Remove the file from the files map
-    files.erase(lfsFilename);
 }
 
 /*std::string LFS::cat(std::string lfsFilename) {
@@ -172,21 +32,9 @@ void LFS::remove(std::string lfsFilename) {
   }*/
 
 void LFS::flush() {
-    for(int i = 0; i < 32; i++) {
-        std::ofstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::out | std::ios::trunc | std::ios::binary);
-        SEGMENT << segments[i];
-    }
-    std::ofstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::out | std::ios::trunc | std::ios::binary);
-    for(auto i: isClean) {
-        CHECKPOINT_REGION << i;
-    }
-    for(auto c: checkpoint) {
-        CHECKPOINT_REGION << c;
-    }
 }
 
 /*void LFS::clean() {
 
 
   }*/
-

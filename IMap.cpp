@@ -8,11 +8,10 @@ IMap::IMap()
 }
 
 IMap::IMap(Block& b)
-    : Block(),
+    : Block(b),
     currentIdx{0},
     freeCount{blockSize} {
         for (unsigned i = 0; i < blockSize; i++) {
-            data[i] = b.data[i];
             if (data[i] != '\0') {
                 freeCount--;
                 currentIdx = i;

@@ -5,7 +5,7 @@
 #include "SummaryBlock.h"
 #include "Block.h"
 #include "INode.h"
-#include <iostream>
+#include <fstream>
 #include <vector>
 
 class Segment {
@@ -18,9 +18,10 @@ class Segment {
         std::vector<Block> blocks; //size 1024; 0 - 1023
 
     private:
-        unsigned summaryBlockcount;
+    	std::string segmentFileName;
+        std::fstream file;
         unsigned maxBlocks;
-        std::ofstream file;
+        unsigned summaryBlockCount;
         unsigned currentBlockIdx;
 };
 

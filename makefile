@@ -1,6 +1,6 @@
 CC = g++
 CPPFLAGS = -std=c++11 -Wall -pedantic
-OBJECTS = program2.o Block.o DataBlock.o IMap.o INode.o LFS.o Segment.o SummaryBlock.o
+OBJECTS = program2.o Block.o IMap.o INode.o LFS.o Segment.o SummaryBlock.o
 
 all:	program2
 

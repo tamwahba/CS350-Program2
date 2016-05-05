@@ -7,13 +7,15 @@
 class Block {
     public:
         Block();
+        Block(Block& b);
         ~Block();
-        int blockSize = 1024;
 
-        void overwite(char character, unsigned start, unsigned size);
+        void overwrite(char character, unsigned start, unsigned size);
 
         friend std::istream& operator>>(std::istream& input, Block& block);
         friend std::ostream& operator<<(std::ostream& output, const Block& block);
+
+        unsigned blockSize = 1024;
 
     protected:
         char* data;

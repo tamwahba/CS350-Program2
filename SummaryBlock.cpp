@@ -1,7 +1,7 @@
 #include "SummaryBlock.h"
 
 std::istream& operator>>(std::istream& input, SummaryBlock& SummaryBlock) {
-    for (int i = 0; i < SummaryBlock.blockSize; ++i) {
+    for (unsigned i = 0; i < SummaryBlock.blockSize; ++i) {
         unsigned int val;
         input.read((char*)&val, sizeof(unsigned int));
         SummaryBlock.blockIndices.push_back(val);

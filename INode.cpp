@@ -1,47 +1,56 @@
 #include "INode.h"
 
-INode::INode() 
-    : Block() {
-
-}
-
 INode::INode(std::string name) 
     : Block(),
     fileName{name},
-    fileSize{0} {
-        char[] n = name.c_str();
-        for (int i = 0; i < name.length() && i < blockSize - maxFileBlocks; i++) {
-            data[i] = char[i];
+    fileSize{0},
+    fileSizeIdx{0} {
+    	// add filename including null character
+        const char* n = name.c_str();
+        for (unsigned i = 0; i <= sizeof(n) && i < blockSize - maxFileBlocks; i++) {
+            data[i] = n[i];
             currentIdx = i;
         }
+        fileSizeIdx = currentIdx; // location of file size (right after file name)
+        currentIdx += sizeof(fileSize); // move data write head to next free byte 
+        writeFileSize();
 }
 
-INode(&Block b)
-    : Block(),
-    fileName{b.data}
-    fileSize{0} {
-        for (int i = 0; i < fileName.length(); i++) {
-            data[i] = b.data[i];
-        }
-
-        for (unsigned i = fileName.length(); i < blockSize; i++) {
-            data[i] = b.data[i];
-            if (data[i] != '\0') {
-                fileSize++;
-                currentIdx = i;
-            }
-        }
+INode::INode(Block& b)
+    : Block(b),
+    fileName{data},
+    fileSize{0},
+    fileSizeIdx{0} {
+    	readFileSize();
+    	currentIdx = fileSizeIdx + fileSize;
 }
 
 unsigned INode::addBlockWithAddress(unsigned address) {
-    if (currentIdx < blockSize) {
+    if (currentIdx < maxFileBlocks) {
         data[currentIdx] = address;
         currentIdx++;
-        freeCount--;
+        fileSize++;
+        writeFileSize();
     }
     return currentIdx - 1;
 }
 
 void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
     data[index] = address;
+}
+
+void INode::writeFileSize() {
+	char* sizePtr = (char *)&fileSize;
+	for (unsigned i = 0; i < sizeof(fileSize); i++) {
+		data[fileSizeIdx + i] = sizePtr[i];
+	}
+}
+
+void INode::readFileSize() {
+	fileSizeIdx = fileName.size() + 1;
+	char* sizePtr = (char*)&fileSize;
+	for (unsigned i = 0; i < sizeof(fileSize); i++) {
+		sizePtr[i] = data[fileSizeIdx + i];
+	}
+	fileSize = *((unsigned*)sizePtr);
 }

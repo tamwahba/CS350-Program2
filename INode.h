@@ -10,11 +10,14 @@ class INode : public Block {
     private:
         std::string fileName;
         unsigned fileSize; //in blocks
+        unsigned fileSizeIdx;
         unsigned currentIdx;
         unsigned maxFileBlocks = 128;
 
+        void writeFileSize();
+        void readFileSize();
+
     public:
-        INode();
         INode(std::string name);
         INode(Block& b);
 
