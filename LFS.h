@@ -22,7 +22,8 @@ class LFS {
 
         void updateClean();
         Block* getBlock(unsigned int address);
-
+        unsigned getSegmentIndex(unsigned address);
+        unsigned getBlockIndex(unsigned address);
     public:
         LFS();
 

@@ -2,7 +2,7 @@
 
 std::istream& operator>>(std::istream& input, IMap& iMap) {
     for (int i = 0; i < iMap.blockSize; ++i) {
-        unsigned int val;
+        unsigned int val = 0;
         input.read((char *)&val, sizeof(unsigned int));
         iMap.iNodes[i] = val;
     }
