@@ -1,7 +1,7 @@
 #include "Segment.h"
 
 std::istream& operator>>(std::istream& input, Segment& segment) {
-    input >> segment.SSB;
+    // input >> segment.SSB;
     std::cout << "Constructing each block" << std::endl;
     for (unsigned int i = 0; i < segment.maxBlocks; i++) {
         Block* block = new Block();
@@ -18,9 +18,9 @@ std::istream& operator>>(std::istream& input, Segment& segment) {
 
 
 std::ostream& operator<<(std::ostream& output, const Segment& segment) {
-    output << segment.SSB;
+    // output << segment.SSB;
     for (auto iter = segment.blocks.begin(); iter != segment.blocks.end(); ++iter) {
-        output << *iter;
+        output << **iter;
     }
     return output;
 }

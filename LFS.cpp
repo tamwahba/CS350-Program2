@@ -22,6 +22,7 @@ LFS::LFS() {
             SEGMENT.open("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::binary | std::ios::in | std::ios::out);
         }
         SEGMENT >> segments[i];
+        SEGMENT.close();
     }
 
     std::cout << "Constructing the CR" << std::endl;
@@ -29,20 +30,25 @@ LFS::LFS() {
     std::ifstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::in | std::ios::binary);
     if(CHECKPOINT_REGION.peek() == std::ifstream::traits_type::eof()) {
         CHECKPOINT_REGION.close();
-        std::ofstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
+        std::ofstream CHECKPOINT_REGION2("DRIVE/CHECKPOINT_REGION", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
         for(int i = 0; i < 192; i++) {
-            CHECKPOINT_REGION.put('\0');
+            CHECKPOINT_REGION2.put('\0');
         }
-        CHECKPOINT_REGION.close();
+        CHECKPOINT_REGION2.close();
         CHECKPOINT_REGION.open("DRIVE/CHECKPOINT_REGION", std::ios::binary | std::ios::in | std::ios::out);
     }
 
     unsigned int tempIndex = 0;
-    for(int i = 0; i < 32 && CHECKPOINT_REGION >> tempIndex; i++) {
-        isClean.push_back(tempIndex);
+    for(int i = 0; i < 32 && CHECKPOINT_REGION.read((char*)&tempIndex, sizeof(unsigned)); i++) {
+        isClean[i] = tempIndex;
         std::cout << tempIndex << std::endl;
     }
-    while(CHECKPOINT_REGION >> tempIndex) checkpoint.push_back(tempIndex);
+    while(CHECKPOINT_REGION.read((char*)&tempIndex, sizeof(unsigned))) {
+        if (tempIndex > 0) {
+            checkpoint.push_back(tempIndex);
+        }
+    }
+    CHECKPOINT_REGION.close();
     std::cout << "Constructing the file map" << std::endl;
     //Construct the file map
     for(auto i: checkpoint) {
@@ -178,14 +184,17 @@ void LFS::flush() {
     for(int i = 0; i < 32; i++) {
         std::ofstream SEGMENT("DRIVE/SEGMENT" + std::to_string(i + 1), std::ios::out | std::ios::trunc | std::ios::binary);
         SEGMENT << segments[i];
+        SEGMENT.close();
     }
     std::ofstream CHECKPOINT_REGION("DRIVE/CHECKPOINT_REGION", std::ios::out | std::ios::trunc | std::ios::binary);
     for(auto i: isClean) {
-        CHECKPOINT_REGION << i;
+        std::cout << "WRITING CLEAN: " << i << std::endl; 
+        CHECKPOINT_REGION.write((char*)&i, sizeof(unsigned));
     }
     for(auto c: checkpoint) {
-        CHECKPOINT_REGION << c;
+        CHECKPOINT_REGION.write((char*)&c, sizeof(unsigned));
     }
+    CHECKPOINT_REGION.close();
 }
 
 /*void LFS::clean() {
