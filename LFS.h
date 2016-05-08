@@ -15,27 +15,31 @@
 class LFS {
     public:
         LFS();
+        ~LFS();
 
-        void import(std::string lfsFilename, std::istream &data);
+        void import(std::string& lfsFileName, std::istream& data);
         std::string list();
-        void remove(std::string lfsFilename);
-        //std::string cat(std::string lfsFilename);
-        //std::string display(std::string lfsFilename, int howMany, int start);
-        //void overwrite(std::string lfsFilename, int howMany, int start, char c);
+        void remove(std::string& lfsFileName);
+        //std::string cat(std::string lfsFileName);
+        //std::string display(std::string lfsFileName, int howMany, int start);
+        //void overwrite(std::string lfsFileName, int howMany, int start, char c);
         void flush();
         //void clean();
 
     private:
+    	std::fstream checkpointFile;
         std::map<std::string, unsigned> files;
-        // std::vector<Segment> segments;
+        std::vector<Segment*> segments;
         // std::vector<unsigned int> checkpoint;
         // std::vector<unsigned int> isClean; 
         unsigned currentSegmentIdx;
         unsigned currentBlockIdx;
-        unsigned numCleanSegmanets;
+        unsigned numCleanSegments;
 
         unsigned getBlockIndexFromAddress(unsigned address);
         unsigned getSegmentIndexFromAddress(unsigned address);
+        unsigned getImapAddressFromINodeAddress(unsigned address);
+        void selectNewCleanSegment();
         void updateClean();
 };
 

@@ -12,6 +12,7 @@ class Block {
 
         void overwrite(char character, unsigned start, unsigned size);
 
+        Block& operator=(const Block& other);
         friend std::istream& operator>>(std::istream& input, Block& block);
         friend std::ostream& operator<<(std::ostream& output, const Block& block);
 

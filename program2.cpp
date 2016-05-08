@@ -26,7 +26,6 @@ void print_usage()
 int main(int argc, char* argv[]) 
 {
     LFS disk;
-    std::cout << "here\n";
     while (true)
     {
         std::cout << "> ";

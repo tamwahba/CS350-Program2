@@ -16,9 +16,22 @@ Block::~Block() {
 }
 
 void Block::overwrite(char character, unsigned start, unsigned size) {
-	for(unsigned i = start; i < start + size; i++) {
+	for (unsigned i = start; i < start + size; i++) {
 		data[i] = character;
 	}
+}
+
+Block& Block::operator=(const Block& other) {
+    if (&other == this) {
+        return *this;
+    }
+
+	delete data;
+	data = new char[blockSize]();
+	for (unsigned i = 0; i < sizeof(other.data); i++) {
+		data[i] = other.data[i];
+	}
+	return *this;
 }
 
 std::istream& operator>>(std::istream& input, Block& block) {

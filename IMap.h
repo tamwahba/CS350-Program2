@@ -1,5 +1,5 @@
 #ifndef _IMAP_H_
-#define _IMAP_H
+#define _IMAP_H_
 
 #include <vector>
 #include <iostream>
