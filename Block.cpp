@@ -12,7 +12,7 @@ Block::Block(Block& b) {
 }
 
 Block::~Block() {
-	delete data;
+	delete[] data;
 }
 
 void Block::overwrite(char character, unsigned start, unsigned size) {

@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
         else if (command == "exit")
         {
             disk.flush();
-            exit(0);
+            break;
         } 
         else if (command == "list") {
             std::cout << disk.list() << std::endl;
