@@ -15,7 +15,7 @@ class Block {
         friend std::istream& operator>>(std::istream& input, Block& block);
         friend std::ostream& operator<<(std::ostream& output, const Block& block);
 
-        unsigned blockSize = 1024;
+        const unsigned blockSize = 1024;
 
     protected:
         char* data;

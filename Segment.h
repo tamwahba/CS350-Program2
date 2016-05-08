@@ -11,13 +11,14 @@
 class Segment {
     public:
         Segment(std::string fileName, unsigned blockSize, unsigned segmentSize);
+        
         bool addBlock(Block& block, unsigned int howMany);
         // unsigned deadBlockCount(LFS& fileSystem);
         void write();
         
-        std::vector<Block> blocks; //size 1024; 0 - 1023
 
     private:
+        std::vector<Block> blocks; //size 1024; 0 - 1023
     	std::string segmentFileName;
         std::fstream file;
         unsigned maxBlocks;

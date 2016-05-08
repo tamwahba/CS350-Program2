@@ -1,12 +1,20 @@
 #ifndef _INODE_H_
 #define _INODE_H_
 
-#include "Block.h"
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "Block.h"
+
 class INode : public Block {
+    public:
+        INode(std::string name);
+        INode(Block& b);
+
+        unsigned addBlockWithAddress(unsigned address);
+        void updateBlockAddressAtIndex(unsigned address, unsigned index);
+
     private:
         std::string fileName;
         unsigned fileSize; //in blocks
@@ -16,13 +24,6 @@ class INode : public Block {
 
         void writeFileSize();
         void readFileSize();
-
-    public:
-        INode(std::string name);
-        INode(Block& b);
-
-        unsigned addBlockWithAddress(unsigned address);
-        void updateBlockAddressAtIndex(unsigned address, unsigned index);
 };
 
 #endif
