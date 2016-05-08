@@ -28,10 +28,16 @@ Segment::Segment(std::string fileName)
     // std::cout << "End constructor " << segmentFileName << std::endl;
 }
 
+Segment::~Segment() {
+    file.close();
+}
+
 void Segment::write() {
     for (auto block: blocks) {
         file << block;
     }
+    file.clear();
+    file.seekg(0, std::ios::beg);
 }
 
 bool Segment::addBlock(Block& block, unsigned int howMany) {

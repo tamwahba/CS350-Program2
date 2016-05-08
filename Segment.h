@@ -11,6 +11,7 @@
 class Segment {
     public:
         Segment(std::string fileName);
+        ~Segment();
         
         bool addBlock(Block& block, unsigned int howMany);
         // unsigned deadBlockCount(LFS& fileSystem);

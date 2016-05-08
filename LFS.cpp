@@ -13,6 +13,7 @@ LFS::LFS()
 }
 
 LFS::~LFS() {
+    checkpointFile.close();
     for (auto segment: segments) {
         delete segment;
     }
