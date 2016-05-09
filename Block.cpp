@@ -6,7 +6,7 @@ Block::Block() {
 
 Block::Block(Block& b) {
 	data = new char[blockSize]();
-	for (unsigned i = 0; i < sizeof(b.data); i++) {
+	for (unsigned i = 0; i < blockSize; i++) {
 		data[i] = b.data[i];
 	}
 }
@@ -28,7 +28,7 @@ Block& Block::operator=(const Block& other) {
 
 	delete data;
 	data = new char[blockSize]();
-	for (unsigned i = 0; i < sizeof(other.data); i++) {
+	for (unsigned i = 0; i < blockSize; i++) {
 		data[i] = other.data[i];
 	}
 	return *this;

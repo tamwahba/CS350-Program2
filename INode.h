@@ -12,7 +12,7 @@ class INode : public Block {
         INode(std::string name);
         INode(Block& b);
 
-        unsigned addBlockWithAddress(unsigned address);
+        unsigned addBlockAddress(unsigned address);
         void updateBlockAddressAtIndex(unsigned address, unsigned index);
 
     private:

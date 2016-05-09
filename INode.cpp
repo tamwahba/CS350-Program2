@@ -5,12 +5,13 @@ INode::INode(std::string name)
     fileName{name},
     fileSize{0},
     fileSizeIdx{0} {
-    	// add filename including null character
+    	// add file name including null character
         const char* n = name.c_str();
         for (unsigned i = 0; i <= sizeof(n) && i < blockSize - maxFileBlocks; i++) {
             data[i] = n[i];
-            currentIdx = i;
         }
+        currentIdx = sizeof(n) + 1;
+        data[currentIdx++] = '\0'; // add null terminator
         fileSizeIdx = currentIdx; // location of file size (right after file name)
         currentIdx += sizeof(fileSize); // move data write head to next free byte 
         writeFileSize();
@@ -18,39 +19,41 @@ INode::INode(std::string name)
 
 INode::INode(Block& b)
     : Block(b),
-    fileName{data},
+    fileName(data),
     fileSize{0},
     fileSizeIdx{0} {
-    	readFileSize();
-    	currentIdx = fileSizeIdx + fileSize;
+        readFileSize();
+        currentIdx = fileSizeIdx + sizeof(fileSizeIdx) + (fileSize * sizeof(unsigned));
 }
 
-unsigned INode::addBlockWithAddress(unsigned address) {
+unsigned INode::addBlockAddress(unsigned address) {
+    unsigned addressIdx = currentIdx;
     if (currentIdx < maxFileBlocks) {
-        data[currentIdx] = address;
-        currentIdx++;
+        for (unsigned i = 0; i < sizeof(address); i++) {
+            data[currentIdx + i] = ((char*)&address)[i];
+        }
+        currentIdx += sizeof(address);
         fileSize++;
         writeFileSize();
     }
-    return currentIdx - 1;
+    return addressIdx;
 }
 
 void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
-    data[index] = address;
+    for (unsigned i = 0; i < sizeof(address); i++) {
+        data[index + i] = ((char*)&address)[i];
+    }
 }
 
 void INode::writeFileSize() {
-	char* sizePtr = (char *)&fileSize;
 	for (unsigned i = 0; i < sizeof(fileSize); i++) {
-		data[fileSizeIdx + i] = sizePtr[i];
+		data[fileSizeIdx + i] = ((char*)&fileSize)[i];
 	}
 }
 
 void INode::readFileSize() {
 	fileSizeIdx = fileName.size() + 1;
-	char* sizePtr = (char*)&fileSize;
 	for (unsigned i = 0; i < sizeof(fileSize); i++) {
-		sizePtr[i] = data[fileSizeIdx + i];
+		((char*)&fileSize)[i] = data[fileSizeIdx + i];
 	}
-	fileSize = *((unsigned*)sizePtr);
 }

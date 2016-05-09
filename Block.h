@@ -18,7 +18,7 @@ class Block {
 
         const unsigned blockSize = 1024;
 
-    protected:
+    public:
         char* data;
 };
 
