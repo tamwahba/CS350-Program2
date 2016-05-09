@@ -28,10 +28,10 @@ class LFS {
 
     private:
     	std::fstream checkpointFile;
-        std::map<std::string, unsigned> files;
         std::vector<Segment*> segments;
-        // std::vector<unsigned int> checkpoint;
-        // std::vector<unsigned int> isClean; 
+        std::vector<bool> isClean;
+        std::vector<unsigned> iMapAddresses;
+        std::map<std::string, unsigned> files;
         unsigned currentSegmentIdx;
         unsigned currentBlockIdx;
         unsigned numCleanSegments;

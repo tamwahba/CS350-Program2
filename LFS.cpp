@@ -3,10 +3,32 @@
 LFS::LFS()
     : checkpointFile{"DRIVE/CHECKPOINT_REGION",
         std::ios::binary | std::ios::in | std::ios::out},
+    isClean(32, true),
+    iMapAddresses(40, 0),
     currentSegmentIdx{0},
     currentBlockIdx{0},
     numCleanSegments{32} {
-        // TODO PROCESS CHECKPOINT REGION
+        // read or create checkpoint region
+        if (!checkpointFile) {
+            checkpointFile.close();
+            checkpointFile.open("DRIVE/CHECKPOINT_REGION",
+                std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
+        } else {
+            for (unsigned i = 0; i < isClean.size() && checkpointFile; i++) {
+                bool clean = isClean[i];
+                checkpointFile.read((char*)&clean, sizeof(clean));
+                isClean[i] = clean;
+                if (!isClean[i]) {
+                    numCleanSegments--;
+                }
+            }
+            for (unsigned i = 0; i < iMapAddresses.size() && checkpointFile; i++) {
+                checkpointFile.read((char*)&iMapAddresses[i], sizeof(iMapAddresses[i]));
+            }
+            checkpointFile.clear();
+            checkpointFile.seekg(0, std::ios::beg);
+        }
+        // read or create segments
         for (int i = 0; i < 32; i++) {
             segments.push_back(new Segment("DRIVE/SEGMENT" + std::to_string(i + 1)));
         }
@@ -62,8 +84,17 @@ void LFS::remove(std::string& lfsFileName) {
   }*/
 
 void LFS::flush() {
+    // write segments
     for (auto segment: segments) {
         segment->write();
+    }
+    // write checkpoint region 
+    for (unsigned i = 0; i < isClean.size(); i++) {
+        bool clean = isClean[i];
+        checkpointFile.write((char*)&clean, sizeof(clean));
+    }
+    for (unsigned i = 0; i < iMapAddresses.size(); i++) {
+        checkpointFile.write((char*)&iMapAddresses[i], sizeof(iMapAddresses[i]));
     }
 }
 
