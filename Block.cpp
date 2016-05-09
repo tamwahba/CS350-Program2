@@ -21,6 +21,11 @@ void Block::overwrite(char character, unsigned start, unsigned size) {
 	}
 }
 
+std::string Block::getStringOfLength(unsigned lengthBytes) {
+	return "";
+}
+
+
 Block& Block::operator=(const Block& other) {
     if (&other == this) {
         return *this;

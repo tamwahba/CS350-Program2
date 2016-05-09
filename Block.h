@@ -11,6 +11,7 @@ class Block {
         ~Block();
 
         void overwrite(char character, unsigned start, unsigned size);
+        std::string getStringOfLength(unsigned lengthBytes);
 
         Block& operator=(const Block& other);
         friend std::istream& operator>>(std::istream& input, Block& block);
