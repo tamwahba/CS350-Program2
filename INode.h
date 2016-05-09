@@ -16,9 +16,9 @@ class INode : public Block {
         void updateBlockAddressAtIndex(unsigned address, unsigned index);
 
         std::string fileName;
+        unsigned fileSize; //in blocks
 
     private:
-        unsigned fileSize; //in blocks
         unsigned fileSizeIdx;
         unsigned currentIdx;
         unsigned maxFileBlocks = 128;
