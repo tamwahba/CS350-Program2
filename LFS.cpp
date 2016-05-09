@@ -109,9 +109,14 @@ void LFS::import(std::string& lfsFileName, std::istream& data) {
 std::string LFS::list() {
     std::stringstream fNames;
     for (auto file: files) {
-        fNames << file.first << std::endl;
+        unsigned int segmentIdx = file.second >> 10;
+        unsigned int blockIdx = file.second & 0x3FF;
+        INode iNode(segments[segmentIdx]->blocks[blockIdx]);
+        fNames << file.first << " ";
+        fNames << iNode.fileSize;
+        fNames << std::endl;
     }
-    return fNames.str();;
+    return fNames.str();
 }
 
 void LFS::remove(std::string& lfsFileName) {
