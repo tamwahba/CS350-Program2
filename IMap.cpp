@@ -9,14 +9,16 @@ IMap::IMap()
 
 IMap::IMap(Block& b)
     : Block(b),
+    iNodeAddresses{blockSize/4},
     currentIdx{0},
     freeCount{blockSize} {
         for (unsigned i = 0; i < blockSize; i += sizeof(unsigned)) {
-            unsigned index = 0;
+            unsigned address = 0;
             for (unsigned j = 0; j < sizeof(unsigned); j++) {
-                ((char*)&index)[j] = data[i + j];
+                ((char*)&address)[j] = data[i + j];
             }
-            if (index != 0) {
+            if (address != 0) {
+                iNodeAddresses[i] = address;
                 freeCount--;
                 currentIdx = i + sizeof(unsigned);
             }
@@ -25,13 +27,13 @@ IMap::IMap(Block& b)
 
 unsigned IMap::addINodeWithAddress(unsigned address) {
     unsigned addressIdx = currentIdx;
+    // TODO - add to free spots when at end of list
     if (currentIdx < blockSize) {
         for (unsigned i = 0; i < sizeof(address); i++) {
             data[currentIdx + i] = ((char*)&address)[i];
         }
         currentIdx += sizeof(address);
         freeCount--;
-        writeFileSize();
     }
     return addressIdx;
 }
@@ -48,6 +50,11 @@ void IMap::removeINodeAtIndex(unsigned index) {
         data[index + i] = '\0';
     }
     freeCount++;
+}
+
+bool IMap::hasFree() {
+    // return freeCount > 0;
+    return currentIdx < blockSize;
 }
 
 // bool hasFreeIndecies() {

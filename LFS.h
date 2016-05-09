@@ -32,6 +32,7 @@ class LFS {
         std::vector<bool> isClean;
         std::vector<unsigned> iMapAddresses;
         std::map<std::string, unsigned> files;
+        unsigned currentIMapIdx;
         unsigned currentSegmentIdx;
         unsigned currentBlockIdx;
         unsigned numCleanSegments;

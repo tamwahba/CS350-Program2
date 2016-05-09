@@ -15,9 +15,11 @@ class IMap: public Block {
         unsigned addINodeWithAddress(unsigned address);
         void updateINodeAddressAtIndex(unsigned address, unsigned index);
         void removeINodeAtIndex(unsigned index);
+        bool hasFree();
+
+        std::vector<unsigned> iNodeAddresses;
 
     private:
-        std::vector<INode*> iNodes;
         unsigned currentIdx;
         unsigned freeCount;    
 };

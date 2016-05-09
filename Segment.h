@@ -13,7 +13,7 @@ class Segment {
         Segment(std::string fileName);
         ~Segment();
         
-        bool addBlock(Block& block, unsigned int howMany);
+        unsigned addBlock(Block& block, unsigned int howMany);
         // unsigned deadBlockCount(LFS& fileSystem);
         void write();
         

@@ -40,14 +40,14 @@ void Segment::write() {
     file.seekg(0, std::ios::beg);
 }
 
-bool Segment::addBlock(Block& block, unsigned int howMany) {
+unsigned Segment::addBlock(Block& block, unsigned int howMany) {
     std::cout << "Segment " << segmentFileName;
-    std::cout << " adding block at index" << currentBlockIdx << std::endl;
+    std::cout << " adding block at index " << currentBlockIdx << std::endl;
     if (currentBlockIdx + howMany < maxBlocks) {
         blocks[currentBlockIdx] = block;
-        std::cout << "Segment " << segmentFileName << "added" << std::endl;
-        return true;
+        std::cout << "Segment " << segmentFileName << " added" << std::endl;
+        return currentBlockIdx++;
     }
     std::cout << "Segment " << segmentFileName << " no space" << std::endl;
-    return false;
+    return 0;
 }
