@@ -11,30 +11,43 @@ IMap::IMap(Block& b)
     : Block(b),
     currentIdx{0},
     freeCount{blockSize} {
-        for (unsigned i = 0; i < blockSize; i++) {
-            if (data[i] != '\0') {
+        for (unsigned i = 0; i < blockSize; i += sizeof(unsigned)) {
+            unsigned index = 0;
+            for (unsigned j = 0; j < sizeof(unsigned); j++) {
+                ((char*)&index)[j] = data[i + j];
+            }
+            if (index != 0) {
                 freeCount--;
-                currentIdx = i;
+                currentIdx = i + sizeof(unsigned);
             }
         }
     }
 
 unsigned IMap::addINodeWithAddress(unsigned address) {
+    unsigned addressIdx = currentIdx;
     if (currentIdx < blockSize) {
-        data[currentIdx] = address;
-        currentIdx++;
+        for (unsigned i = 0; i < sizeof(address); i++) {
+            data[currentIdx + i] = ((char*)&address)[i];
+        }
+        currentIdx += sizeof(address);
         freeCount--;
+        writeFileSize();
     }
-    return currentIdx - 1;
+    return addressIdx;
 }
 
 void IMap::updateINodeAddressAtIndex(unsigned address, unsigned index) {
-    data[index] = address;
+    for (unsigned i = 0; i < sizeof(address); i++) {
+        data[index + i] = ((char*)&address)[i];
+    }
 }
 
 
 void IMap::removeINodeAtIndex(unsigned index) {
-    data[index] = '\0';
+    for (unsigned i = 0; i < sizeof(unsigned); i++) {
+        data[index + i] = '\0';
+    }
+    freeCount++;
 }
 
 // bool hasFreeIndecies() {
