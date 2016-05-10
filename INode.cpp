@@ -7,7 +7,7 @@ INode::INode(std::string name)
     fileSizeIdx{0} {
     	// add file name including null character
         const char* n = name.c_str();
-        for (unsigned i = 0; i <= sizeof(n) && i < blockSize - maxFileBlocks; i++) {
+        for (unsigned i = 0; i <= sizeof(n) && i < blockSize - maxFileBlocks && n[i] != '\0'; i++) {
             data[i] = n[i];
         }
         currentIdx = sizeof(n) + 1;
