@@ -1,6 +1,7 @@
 #ifndef _IMAP_H_
 #define _IMAP_H_
 
+#include <cstring>
 #include <vector>
 #include <iostream>
 
@@ -16,6 +17,7 @@ class IMap: public Block {
         void updateINodeAddressAtIndex(unsigned address, unsigned index);
         void removeINodeAtIndex(unsigned index);
         bool hasFree();
+        unsigned getNextINodeIndex();
 
         std::vector<unsigned> iNodeAddresses;
 

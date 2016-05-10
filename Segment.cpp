@@ -1,31 +1,29 @@
 #include "Segment.h"
 
 Segment::Segment(std::string fileName)
-    : maxBlocks{1024},
-    summaryBlockCount{8},
-    currentBlockIdx{0},
-    segmentFileName{fileName},
-    file{segmentFileName, std::ios::binary | std::ios::in | std::ios::out},
-    blocks{maxBlocks} {
-    // std::cout << "Segment constructor " << segmentFileName << std::endl;
-    // std::cout << "numBlocks: " << blocks.size() << std::endl;
-    // std::cout << "maxBlocks: " << maxBlocks << std::endl;
-    // std::cout << "summaryBlockCount: " << summaryBlockCount << std::endl;
-    // std::cout << "currentBlockIdx: " << currentBlockIdx << std::endl;
+        : maxBlocks{1024},
+        summaryBlockCount{8},
+        currentBlockIdx{0},
+        segmentFileName{fileName},
+        file{segmentFileName, std::ios::binary | std::ios::in | std::ios::out},
+        blocks{maxBlocks} {
+    for (unsigned i = 0; i < summaryBlockCount; i++) {
+        Block block;
+        block.overwrite(std::numeric_limits<unsigned char>::max(), 0, 1024);
+        blocks[i] = block;
+    }
     if (!file) {
-        // std::cout << segmentFileName << "doesn't exist" << std::endl;
         file.close();
-        // std::cout << "making " << segmentFileName << std::endl;
-        file.open(segmentFileName, std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
+        file.open(segmentFileName,
+            std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
     } else {
         while (file && currentBlockIdx < maxBlocks) {
             file >> blocks[currentBlockIdx];
-            currentBlockIdx++;
         }
+        currentBlockIdx = 8;
     }
     file.clear();
     file.seekg(0, std::ios::beg);
-    // std::cout << "End constructor " << segmentFileName << std::endl;
 }
 
 Segment::~Segment() {
@@ -40,14 +38,29 @@ void Segment::write() {
     file.seekg(0, std::ios::beg);
 }
 
-unsigned Segment::addBlock(Block& block, unsigned int howMany) {
-    std::cout << "Segment " << segmentFileName;
-    std::cout << " adding block at index " << currentBlockIdx << std::endl;
+unsigned Segment::addBlock(Block& block, unsigned blockIndex,
+        unsigned iNodeIndex, unsigned howMany) {
+    // std::cout << "Segment " << segmentFileName;
+    // std::cout << " adding block at index " << currentBlockIdx << std::endl;
     if (currentBlockIdx + howMany < maxBlocks) {
         blocks[currentBlockIdx] = block;
-        std::cout << "Segment " << segmentFileName << " added" << std::endl;
+        // std::cout << "Segment " << segmentFileName << " added" << std::endl;
+        
+        unsigned currentSummaryBlockIdx = currentBlockIdx % summaryBlockCount;
         return currentBlockIdx++;
     }
-    std::cout << "Segment " << segmentFileName << " no space" << std::endl;
+    // std::cout << "Segment " << segmentFileName << " no space" << std::endl;
     return 0;
+}
+
+unsigned Segment::addBlock(Block& block, unsigned blockIndex, unsigned iNodeIndex) {
+    return Segment::addBlock(block, blockIndex, iNodeIndex, 0);
+}
+
+unsigned Segment::addBlock(INode& block, unsigned index) {
+    return Segment::addBlock(block, 128, index, 0);
+}
+
+unsigned Segment::addBlock(IMap& block, unsigned index) {
+    return Segment::addBlock(block, index, 10 * 1024, 0);
 }

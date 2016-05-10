@@ -31,7 +31,7 @@ Block& Block::operator=(const Block& other) {
         return *this;
     }
 
-	delete data;
+	delete[] data;
 	data = new char[blockSize]();
 	for (unsigned i = 0; i < blockSize; i++) {
 		data[i] = other.data[i];

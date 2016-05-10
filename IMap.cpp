@@ -9,16 +9,14 @@ IMap::IMap()
 
 IMap::IMap(Block& b)
     : Block(b),
-    iNodeAddresses{blockSize/4},
+    iNodeAddresses(blockSize/4, 0),
     currentIdx{0},
     freeCount{blockSize} {
         for (unsigned i = 0; i < blockSize; i += sizeof(unsigned)) {
             unsigned address = 0;
-            for (unsigned j = 0; j < sizeof(unsigned); j++) {
-                ((char*)&address)[j] = data[i + j];
-            }
+            memcpy(&address, &(data[i]), sizeof(address));
+            iNodeAddresses[i/4] = address;
             if (address != 0) {
-                iNodeAddresses[i] = address;
                 freeCount--;
                 currentIdx = i + sizeof(unsigned);
             }
@@ -56,6 +54,11 @@ bool IMap::hasFree() {
     // return freeCount > 0;
     return currentIdx < blockSize;
 }
+
+unsigned IMap::getNextINodeIndex() {
+    return currentIdx;
+}
+
 
 // bool hasFreeIndecies() {
 //     return freeCount > 0;
