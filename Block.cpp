@@ -1,19 +1,52 @@
 #include "Block.h"
+using namespace std;
+Block obj;
+Block::Block() {
+	data = new char[blockSize]();
+}
+
+Block::Block(Block& b) {
+	data = new char[blockSize]();
+	for (unsigned i = 0; i < blockSize; i++) {
+		data[i] = b.data[i];
+	//cout << data;
+	}
+}
+
+Block::~Block() {
+	delete[] data;
+}
+
+void Block::overwrite(char character, unsigned start, unsigned size) {
+	for (unsigned i = start; i < start + size; i++) {
+		data[i] = character;
+	}
+}
+
+std::string Block::getStringOfLength(unsigned lengthBytes) {
+	return "";
+}
+
+
+Block& Block::operator=(const Block& other) {
+    if (&other == this) {
+        return *this;
+    }
+
+	delete data;
+	data = new char[blockSize]();
+	for (unsigned i = 0; i < blockSize; i++) {
+		data[i] = other.data[i];
+	}
+	return *this;
+}
 
 std::istream& operator>>(std::istream& input, Block& block) {
-    char* buffer = new char[block.blockSize]();
-    input.read(buffer, block.blockSize);
-    block.blockString = std::string(buffer);
-    delete[] buffer;
-    if(block.blockString.length() != 0) std::cout << block.blockString << std::endl;
+    input.read(block.data, block.blockSize);
     return input;
 }
 
 std::ostream& operator<<(std::ostream& output, const Block& block) {
-    output.write(block.blockString.c_str(), block.blockString.length());
-    for(unsigned i = 0; i < block.blockSize - block.blockString.length(); i++) {
-        output.put('\0');
-    }
+    output.write(block.data, block.blockSize);
     return output;
 }
-

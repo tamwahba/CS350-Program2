@@ -1,54 +1,53 @@
 #include "Segment.h"
 
-std::istream& operator>>(std::istream& input, Segment& segment) {
-    // input >> segment.SSB;
-    std::cout << "Constructing each block" << std::endl;
-    for (unsigned int i = 0; i < segment.maxBlocks; i++) {
-        Block* block = new Block();
-        input >> *block;
-        if(!block->blockString.empty()) {
-            segment.blocks.push_back(block);
-            std::cout << block->blockString.size() << ", ";
-        } else {
-            delete block;
+Segment::Segment(std::string fileName)
+    : maxBlocks{1024},
+    summaryBlockCount{8},
+    currentBlockIdx{0},
+    segmentFileName{fileName},
+    file{segmentFileName, std::ios::binary | std::ios::in | std::ios::out},
+    blocks{maxBlocks} {
+    // std::cout << "Segment constructor " << segmentFileName << std::endl;
+    // std::cout << "numBlocks: " << blocks.size() << std::endl;
+    // std::cout << "maxBlocks: " << maxBlocks << std::endl;
+    // std::cout << "summaryBlockCount: " << summaryBlockCount << std::endl;
+    // std::cout << "currentBlockIdx: " << currentBlockIdx << std::endl;
+    if (!file) {
+        // std::cout << segmentFileName << "doesn't exist" << std::endl;
+        file.close();
+        // std::cout << "making " << segmentFileName << std::endl;
+        file.open(segmentFileName, std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
+    } else {
+        while (file && currentBlockIdx < maxBlocks) {
+            file >> blocks[currentBlockIdx];
+            currentBlockIdx++;
         }
     }
-    return input;
-}
-
-
-std::ostream& operator<<(std::ostream& output, const Segment& segment) {
-    // output << segment.SSB;
-    for (auto iter = segment.blocks.begin(); iter != segment.blocks.end(); ++iter) {
-        output << **iter;
-    }
-    return output;
-}
-
-bool Segment::addBlock(Block& block, unsigned int howMany) {
-    if((blocks.size() + howMany) < maxBlocks) {
-        blocks.push_back(&block);
-        return true;
-    } else return false;
-}
-
-bool Segment::addBlock(INode& block, unsigned int howMany) {
-    if((blocks.size() + howMany) < maxBlocks) {
-        blocks.push_back(&block);
-        return true;
-    } else return false;
-}
-
-bool Segment::addBlock(IMap& block, unsigned int howMany) {
-    if((blocks.size() + howMany) < maxBlocks) {
-        blocks.push_back(&block);
-        return true;
-    } else return false;
+    file.clear();
+    file.seekg(0, std::ios::beg);
+    // std::cout << "End constructor " << segmentFileName << std::endl;
 }
 
 Segment::~Segment() {
-    for(auto i : blocks)
-        delete i;
+    file.close();
 }
 
+void Segment::write() {
+    for (auto block: blocks) {
+        file << block;
+    }
+    file.clear();
+    file.seekg(0, std::ios::beg);
+}
 
+unsigned Segment::addBlock(Block& block, unsigned int howMany) {
+    std::cout << "Segment " << segmentFileName;
+    std::cout << " adding block at index " << currentBlockIdx << std::endl;
+    if (currentBlockIdx + howMany < maxBlocks) {
+        blocks[currentBlockIdx] = block;
+        std::cout << "Segment " << segmentFileName << " added" << std::endl;
+        return currentBlockIdx++;
+    }
+    std::cout << "Segment " << segmentFileName << " no space" << std::endl;
+    return 0;
+}

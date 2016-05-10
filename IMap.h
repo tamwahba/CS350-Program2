@@ -5,12 +5,23 @@
 #include <iostream>
 
 #include "Block.h"
+#include "INode.h"
 
 class IMap: public Block {
     public:
-        std::vector<unsigned int> iNodes;
-        friend std::istream& operator>>(std::istream& input, IMap& iMap);
-        friend std::ostream& operator<<(std::ostream& output, const IMap& iMap);            
+        IMap();
+        IMap(Block& b);
+
+        unsigned addINodeWithAddress(unsigned address);
+        void updateINodeAddressAtIndex(unsigned address, unsigned index);
+        void removeINodeAtIndex(unsigned index);
+        bool hasFree();
+
+        std::vector<unsigned> iNodeAddresses;
+
+    private:
+        unsigned currentIdx;
+        unsigned freeCount;    
 };
 
 #endif

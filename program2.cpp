@@ -26,7 +26,6 @@ void print_usage()
 int main(int argc, char* argv[]) 
 {
     LFS disk;
-    std::cout << "here\n";
     while (true)
     {
         std::cout << "> ";
@@ -63,9 +62,10 @@ int main(int argc, char* argv[])
             std::string lfs_filename;
             int howmany;
             int start;
-
             std::cin >> lfs_filename;
             std::cin >> howmany >> start;
+
+            disk.display(lfs_filename, howmany, start);
         }
         else if (command == "overwrite") {
             std::string lfs_filename;
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
         else if (command == "exit")
         {
             disk.flush();
-            exit(0);
+            break;
         } 
         else if (command == "list") {
             std::cout << disk.list() << std::endl;

@@ -1,28 +1,31 @@
 #ifndef _SEGMENT_H_
 #define _SEGMENT_H_
 
+#include <fstream>
+#include <vector>
+
 #include "SummaryBlock.h"
 #include "Block.h"
 #include "INode.h"
-#include "IMap.h"
-#include <iostream>
-#include <vector>
 
 class Segment {
-public:
-    SummaryBlock SSB;
-    std::vector<Block*> blocks; //max 1023
-    unsigned int maxBlocks = 1020;
+    public:
+        Segment(std::string fileName);
+        ~Segment();
+        
+        unsigned addBlock(Block& block, unsigned int howMany);
+        // unsigned deadBlockCount(LFS& fileSystem);
+        void write();
+        
+    private:
+        unsigned maxBlocks;
+        unsigned summaryBlockCount;
+       // unsigned currentBlockIdx;
+        std::string segmentFileName;
+        std::fstream file;
 
-    
-    friend std::istream& operator>>(std::istream& input, Segment& segment);
-    friend std::ostream& operator<<(std::ostream& output, const Segment& segment);
-    bool addBlock(Block& block, unsigned int howMany);
-    bool addBlock(INode& block, unsigned int howMany);
-    bool addBlock(IMap& block, unsigned int howMany);
-    void clean();   
-
-    ~Segment();
+    public:
+        std::vector<Block> blocks; //size 1024; 0 - 1023
 };
 
 #endif

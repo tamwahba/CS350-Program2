@@ -4,12 +4,28 @@
 #include <string>
 #include <iostream>
 
+
+
 class Block {
+
+friend class LFS;
+
     public:
-        int blockSize = 1024;
-        std::string blockString;
+        Block();
+        Block(Block& b);
+        ~Block();
+
+        void overwrite(char character, unsigned start, unsigned size);
+        std::string getStringOfLength(unsigned lengthBytes);
+
+        Block& operator=(const Block& other);
         friend std::istream& operator>>(std::istream& input, Block& block);
         friend std::ostream& operator<<(std::ostream& output, const Block& block);
+
+        const unsigned blockSize = 1024;
+
+    public:
+        char* data;
 };
 
 #endif
