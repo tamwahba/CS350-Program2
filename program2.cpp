@@ -56,7 +56,8 @@ int main(int argc, char* argv[])
             std::string lfs_filename;
 
             std::cin >> lfs_filename;
-
+            std::string data = disk.cat(lfs_filename);
+            std::cout << data << std::endl;
         } 
         else if (command == "display") {
             std::string lfs_filename;
