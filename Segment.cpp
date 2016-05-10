@@ -20,8 +20,8 @@ Segment::Segment(std::string fileName)
         while (file && currentBlockIdx < maxBlocks) {
             file >> blocks[currentBlockIdx];
         }
-        currentBlockIdx = 8;
     }
+    currentBlockIdx = 8;
     file.clear();
     file.seekg(0, std::ios::beg);
 }

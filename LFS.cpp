@@ -37,7 +37,6 @@ LFS::LFS()
             segments.push_back(new Segment("DRIVE/SEGMENT" + std::to_string(i + 1)));
         }
         // read filenames
-        std::cout << currentIMapIdx << std::endl;
         for (unsigned i = 0; i < currentIMapIdx; i++) {
             unsigned iMapAddress = iMapAddresses[currentIMapIdx];
             unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
@@ -70,6 +69,9 @@ void LFS::import(std::string& lfsFileName, std::istream& data) {
     unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
     unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
     IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+    if (iMapAddress == 0) {
+        iMap = IMap();
+    }
     if (!iMap.hasFree()) {
         iMap = IMap();
         currentIMapIdx++; // may go out of bounds.
@@ -184,7 +186,8 @@ void LFS::flush() {
         checkpointFile.write((char*)&clean, sizeof(clean));
     }
     for (unsigned i = 0; i < iMapAddresses.size(); i++) {
-        checkpointFile.write((char*)&iMapAddresses[i], sizeof(iMapAddresses[i]));
+        unsigned address = iMapAddresses[i];
+        checkpointFile.write((char*)&address, sizeof(address));
     }
 }
 
