@@ -22,7 +22,7 @@ void Block::overwrite(char character, unsigned start, unsigned size) {
 }
 
 std::string Block::getStringOfLength(unsigned lengthBytes) {
-	return "";
+	return std::string(data, lengthBytes);
 }
 
 
