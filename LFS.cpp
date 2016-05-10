@@ -136,23 +136,23 @@ void LFS::remove(std::string& lfsFileName) {
 std::string LFS::cat(std::string lfsFileName) {
     std::stringstream data;
     unsigned iNodeAddress = files[lfsFileName];
-    unsigned segmentIndex = getSegmentIndexFromAddress(iNodeAddress);
-    unsigned blockIndex = getBlockIndexFromAddress(iNodeAddress);
-    INode iNode(segments[segmentIndex]->blocks[blockIndex]);
+    unsigned segmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+    unsigned blockIdx = getBlockIndexFromAddress(iNodeAddress);
+    INode iNode(segments[segmentIdx]->blocks[blockIdx]);
     unsigned i = 0;
     while(iNode.data[i] != '\0') i++; //Scanning past filename
     while(iNode.data[i] == '\0') i++; //Scanning to file size
     unsigned numBlocks = 0;
-    i-=3;
-    for(int j = 6; j >= 0; j-=2) {
-        numBlocks += (iNode.data[i++] << j);
-    }
+    i -= 3;
+    for(int j = 6; j >= 0; j -= 2) numBlocks += (iNode.data[i++] << j);
     for(unsigned j = 0; j < numBlocks; j++) {
-        unsigned dataBlockIndex = 0; 
-        for(int k = 6; k >= 0; k-=2) {
-            dataBlockIndex += (iNode.data[i++] << k);
+        unsigned dataBlockAdd = 0; 
+        for(int k = 6; k >= 0; k -= 2) {
+            dataBlockAdd += (iNode.data[i++] << k);
         }
-        data << segments[segmentIndex]->blocks[dataBlockIndex];
+        unsigned dataSegIdx = getSegmentIndexFromAddress(dataBlockAdd);
+        unsigned dataBlockIdx = getBlockIndexFromAddress(dataBlockAdd);
+        data << segments[dataSegIdx]->blocks[dataBlockIdx];
     }
     return data.str();
 }
@@ -162,10 +162,9 @@ std::string LFS::cat(std::string lfsFileName) {
 
   }*/
 
-/*void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
+void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
 
-
-  }*/
+}
 
 void LFS::flush() {
     // write segments

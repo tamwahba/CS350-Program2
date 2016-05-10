@@ -22,7 +22,7 @@ class LFS {
         void remove(std::string& lfsFileName);
         std::string cat(std::string lfsFileName);
         //std::string display(std::string lfsFileName, int howMany, int start);
-        //void overwrite(std::string lfsFileName, int howMany, int start, char c);
+        void overwrite(std::string lfsFileName, int howMany, int start, char c);
         void flush();
         //void clean();
 
