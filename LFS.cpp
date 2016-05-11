@@ -347,10 +347,32 @@ void LFS::flush() {
     flushCheckpoint();
 }
 
-/*void LFS::clean() {
-
-
-  }*/
+void LFS::clean(unsigned numToClean) {
+    std::vector<unsigned> nonEmptyIndices;
+    for (unsigned i = 0; i < segments.size(); i++) {
+        if (!segments[i]->isEmpty()) {
+            nonEmptyIndices.push_back(i);
+        }
+    }
+    for (unsigned i = 0; i < nonEmptyIndices.size() && i < numToClean; i++) {
+        cleanSegmentAtIndex(nonEmptyIndices[i]);
+        // find segment with most empty blocks
+        Segment* currentSegment = segments[nonEmptyIndices[i]];
+        unsigned emptyCount = 0;
+        unsigned mostEmptyIdx = 0;
+        for (unsigned j = 0; j < i; j++) {
+            unsigned currentEmptyCount =
+                segments[nonEmptyIndices[j]]->emptyBlockCount();
+            if (currentEmptyCount < emptyCount) {
+                emptyCount = currentEmptyCount;
+                mostEmptyIdx = nonEmptyIndices[j];
+            }
+        }
+        if (currentSegment->emptyBlockCount() + emptyCount >= 1024) {
+            combineSegments(nonEmptyIndices[i], mostEmptyIdx);
+        }
+    }
+}
 
 unsigned LFS::getBlockIndexFromAddress(unsigned address) {
     return address & 0x3FF;
@@ -403,7 +425,11 @@ void LFS::selectNewCleanSegment(bool recursion) {
     }
 }
 
-void LFS::updateClean() {
+void LFS::cleanSegmentAtIndex(unsigned index) {
+
+}
+
+void LFS::combineSegments(unsigned firstIndex, unsigned secondIndex) {
 
 }
 
