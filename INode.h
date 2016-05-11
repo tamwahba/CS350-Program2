@@ -1,6 +1,7 @@
 #ifndef _INODE_H_
 #define _INODE_H_
 
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -17,6 +18,7 @@ class INode : public Block {
 
         std::string fileName;
         unsigned fileSize; //in blocks
+        std::vector<unsigned> blockAddresses;
 
     private:
         unsigned fileSizeIdx;

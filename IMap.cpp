@@ -30,6 +30,7 @@ unsigned IMap::addINodeWithAddress(unsigned address) {
         for (unsigned i = 0; i < sizeof(address); i++) {
             data[currentIdx + i] = ((char*)&address)[i];
         }
+        iNodeAddresses[addressIdx/4] = address;
         currentIdx += sizeof(address);
         freeCount--;
     }
@@ -37,9 +38,8 @@ unsigned IMap::addINodeWithAddress(unsigned address) {
 }
 
 void IMap::updateINodeAddressAtIndex(unsigned address, unsigned index) {
-    for (unsigned i = 0; i < sizeof(address); i++) {
-        data[index + i] = ((char*)&address)[i];
-    }
+    memcpy(&(data[index]), &address, sizeof(address));
+    iNodeAddresses[index/4] = address;
 }
 
 
