@@ -39,12 +39,12 @@ LFS::LFS()
             checkpointFile.seekg(0, std::ios::beg);
             // read filenames
             for (unsigned i = 0; i <= currentIMapIdx; i++) {
-                unsigned iMapAddress = iMapAddresses[currentIMapIdx];
+                unsigned iMapAddress = iMapAddresses[i];
                 unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
                 unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
                 IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
-                for (unsigned i = 0; i < iMap.iNodeAddresses.size(); i++) {
-                    unsigned iNodeAddress = iMap.iNodeAddresses[i];
+                for (unsigned j = 0; j < iMap.iNodeAddresses.size(); j++) {
+                    unsigned iNodeAddress = iMap.iNodeAddresses[j];
                     if (iNodeAddress != 0) {
                         unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
                         unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
@@ -131,17 +131,19 @@ void LFS::remove(std::string& lfsFileName) {
     unsigned iNodeAddress = files[lfsFileName];
     unsigned iMapIndex = getImapIndexFromINodeAddress(iNodeAddress);
     unsigned iMapAddress = iMapAddresses[iMapIndex];
-    unsigned segmentIndex = getSegmentIndexFromAddress(iMapAddress);
-    unsigned blockIndex = getBlockIndexFromAddress(iMapAddress);
-    IMap iMap(segments[segmentIndex]->blocks[blockIndex]);
-    iMap.removeINodeAtIndex(getBlockIndexFromAddress(iNodeAddress));
+    unsigned iMapSegmentIndex = getSegmentIndexFromAddress(iMapAddress);
+    unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+    IMap iMap(segments[iMapSegmentIndex]->blocks[iMapBlockIdx]);
+    unsigned iNodeIndex = iMap.getIndexForINodeAddress(iNodeAddress);
+    iMap.removeINodeAtIndex(iNodeIndex);
+    
     unsigned iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
     if (iMapOffset == 0) {
         selectNewCleanSegment();
         iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
     }
     iMapAddress = (currentSegmentIdx << 10) + iMapOffset;
-    iMapAddresses[currentIMapIdx] = iMapAddress;
+    iMapAddresses[iMapIndex] = iMapAddress;
     files.erase(lfsFileName);
 }
 
@@ -179,7 +181,8 @@ std::string LFS::display(std::string lfsFileName, int howMany, int start) {
 			}
 			unsigned blockSegmentIdx = getSegmentIndexFromAddress(blockAddress);
 			unsigned blockIdx = getBlockIndexFromAddress(blockAddress);
-			result += segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024);
+			result += 
+				segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024) + '\n';
 		}
 	} else {
 		result = "File " + lfsFileName + " does not exitst.";
