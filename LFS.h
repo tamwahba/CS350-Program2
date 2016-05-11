@@ -40,7 +40,7 @@ class LFS {
         unsigned getBlockIndexFromAddress(unsigned address);
         unsigned getSegmentIndexFromAddress(unsigned address);
         unsigned getImapIndexFromINodeAddress(unsigned address);
-        void selectNewCleanSegment();
+        void selectNewCleanSegment(bool recursion = false);
         void updateClean();
         void flushCheckpoint();
 };

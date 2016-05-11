@@ -53,6 +53,7 @@ LFS::LFS()
                     }
                 }
             }
+            // find a clean segment
         }
 }
 
@@ -91,8 +92,8 @@ void LFS::import(std::string& lfsFileName, std::istream& data) {
         unsigned blockAddress = (currentSegmentIdx << 10) + blockOffset;
         iNode.addBlockAddress(blockAddress);
         if (iNode.fileSize == 128) {
-        	data.setstate(std::ios::badbit);
-        	break;
+            data.setstate(std::ios::badbit);
+            break;
         }
     }
 
@@ -171,24 +172,24 @@ std::string LFS::cat(std::string lfsFileName) {
 }
 
 std::string LFS::display(std::string lfsFileName, int howMany, int start) {
-	std::string result = "";
-	if (files.find(lfsFileName) != files.end()) {
-		unsigned iNodeAddress = files[lfsFileName];
-		unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
-		unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
-		INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
-		for (auto blockAddress: iNode.blockAddresses) {
-			if (blockAddress == 0) {
-				break;
-			}
-			unsigned blockSegmentIdx = getSegmentIndexFromAddress(blockAddress);
-			unsigned blockIdx = getBlockIndexFromAddress(blockAddress);
-			result += segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024);
-		}
-	} else {
-		result = "File " + lfsFileName + " does not exitst.";
-	}
-	return result;
+    std::string result = "";
+    if (files.find(lfsFileName) != files.end()) {
+        unsigned iNodeAddress = files[lfsFileName];
+        unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+        unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
+        INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+        for (auto blockAddress: iNode.blockAddresses) {
+            if (blockAddress == 0) {
+                break;
+            }
+            unsigned blockSegmentIdx = getSegmentIndexFromAddress(blockAddress);
+            unsigned blockIdx = getBlockIndexFromAddress(blockAddress);
+            result += segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024);
+        }
+    } else {
+        result = "File " + lfsFileName + " does not exitst.";
+    }
+    return result;
 }
 
 void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
@@ -355,8 +356,34 @@ unsigned LFS::getImapIndexFromINodeAddress(unsigned address) {
     return 0;
 }
 
-void LFS::selectNewCleanSegment() {
-
+void LFS::selectNewCleanSegment(bool recursion) {
+    if (segments[currentSegmentIdx + 1]->isEmpty()) {
+        // next segment is clean
+        currentSegmentIdx += 1;
+    } else {
+        // find next clean segment to right
+        bool foundClean = false;
+        for (unsigned i = currentSegmentIdx; i < segments.size() && !foundClean; i++) {
+            if (segments[i]->isEmpty()) {
+                currentSegmentIdx = i;
+                foundClean = true;
+            }
+        }
+        // find clean segment to left
+        for (unsigned i = 0; i < currentSegmentIdx && !foundClean; i++) {
+            if (segments[i]->isEmpty()) {
+                currentSegmentIdx = i;
+                foundClean = true;
+            }
+        }
+        // no clean segment, must clean then repeat process
+        if (!recursion && !foundClean) {
+            // TODO - call clean()
+            selectNewCleanSegment(true);
+        } else if (!foundClean) {
+            // PANIC no clean segments and can't clean
+        }
+    }
 }
 
 void LFS::updateClean() {
