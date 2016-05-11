@@ -18,6 +18,7 @@ class IMap: public Block {
         void removeINodeAtIndex(unsigned index);
         bool hasFree();
         unsigned getNextINodeIndex();
+        unsigned getIndexForINodeAddress(unsigned address);
 
         std::vector<unsigned> iNodeAddresses;
 

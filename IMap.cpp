@@ -47,6 +47,7 @@ void IMap::removeINodeAtIndex(unsigned index) {
     for (unsigned i = 0; i < sizeof(unsigned); i++) {
         data[index + i] = '\0';
     }
+    iNodeAddresses[index/4] = 0;
     freeCount++;
 }
 
@@ -59,6 +60,17 @@ unsigned IMap::getNextINodeIndex() {
     return currentIdx;
 }
 
+unsigned IMap::getIndexForINodeAddress(unsigned address) {
+	// assumes address is in this imap.
+	unsigned index = 0;
+	for (auto iter = iNodeAddresses.begin(); iter != iNodeAddresses.end(); iter++) {
+		if (*iter == address) {
+			index = std::distance(iNodeAddresses.begin(), iter);
+			break;
+		}
+	}
+	return index;
+}
 
 // bool hasFreeIndecies() {
 //     return freeCount > 0;
