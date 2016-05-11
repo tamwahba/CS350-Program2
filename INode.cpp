@@ -36,7 +36,7 @@ INode::INode(Block& b)
 
 unsigned INode::addBlockAddress(unsigned address) {
     unsigned addressIdx = currentIdx;
-    if (currentIdx < maxFileBlocks) {
+    if (currentIdx < fileSizeIdx + sizeof(fileSizeIdx) + maxFileBlocks) {
         for (unsigned i = 0; i < sizeof(address); i++) {
             data[currentIdx + i] = ((char*)&address)[i];
         }
@@ -49,8 +49,6 @@ unsigned INode::addBlockAddress(unsigned address) {
 }
 
 void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
-    index = fileSizeIdx + sizeof(fileSize) 
-        + (index * sizeof(unsigned));
     memcpy(&(data[index]), &address, sizeof(address));
     blockAddresses[index/4] = address;
 }
