@@ -4,6 +4,7 @@ INode::INode(std::string name)
     : Block(),
     fileName{name},
     fileSize{0},
+    blockAddresses(blockSize/4),
     fileSizeIdx{0} {
     	// add file name including null character
         const char* n = name.c_str();
@@ -21,9 +22,16 @@ INode::INode(Block& b)
     : Block(b),
     fileName(data),
     fileSize{0},
+    blockAddresses(blockSize/4),
     fileSizeIdx{0} {
         readFileSize();
         currentIdx = fileSizeIdx + sizeof(fileSizeIdx) + (fileSize * sizeof(unsigned));
+        for (unsigned i = 0; i < fileSize; i++) {
+            unsigned index = fileSizeIdx + sizeof(fileSizeIdx) + (i * sizeof(unsigned));
+            unsigned address = 0;
+            memcpy(&address, &(data[index]), sizeof(address));
+            blockAddresses[i] = address;
+        }
 }
 
 unsigned INode::addBlockAddress(unsigned address) {
@@ -35,14 +43,14 @@ unsigned INode::addBlockAddress(unsigned address) {
         currentIdx += sizeof(address);
         fileSize++;
         writeFileSize();
+        blockAddresses[addressIdx/4] = address;
     }
     return addressIdx;
 }
 
 void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
-    for (unsigned i = 0; i < sizeof(address); i++) {
-        data[index + i] = ((char*)&address)[i];
-    }
+    memcpy(&(data[index]), &address, sizeof(address));
+    blockAddresses[index/4] = address;
 }
 
 void INode::writeFileSize() {

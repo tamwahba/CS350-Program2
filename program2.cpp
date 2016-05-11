@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
 
             std::cin >> lfs_filename;
             std::cin >> howmany >> start;
+            std::cout << disk.display(lfs_filename, howmany, start) << std::endl;
         }
         else if (command == "overwrite") {
             std::string lfs_filename;

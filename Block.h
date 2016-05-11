@@ -3,6 +3,8 @@
 
 #include <cstring>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <iostream>
 
 class Block {
@@ -14,6 +16,7 @@ class Block {
         void overwrite(char character, unsigned start, unsigned size);
         void overwrite(void* characters, unsigned start, unsigned size);
         std::string getStringOfLength(unsigned lengthBytes);
+        std::string getFormattedBytesOfLength(unsigned lengthBytes);
         unsigned readUnsignedAtIndex(unsigned index);
 
         Block& operator=(const Block& other);

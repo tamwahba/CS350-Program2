@@ -18,6 +18,7 @@ class INode : public Block {
 
         std::string fileName;
         unsigned fileSize; //in blocks
+        std::vector<unsigned> blockAddresses;
 
     private:
         unsigned fileSizeIdx;

@@ -135,10 +135,13 @@ void LFS::remove(std::string& lfsFileName) {
     unsigned blockIndex = getBlockIndexFromAddress(iMapAddress);
     IMap iMap(segments[segmentIndex]->blocks[blockIndex]);
     iMap.removeINodeAtIndex(getBlockIndexFromAddress(iNodeAddress));
-    if (!segments[currentSegmentIdx]->addBlock(iMap, iMapIndex)) {
+    unsigned iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
+    if (iMapOffset == 0) {
         selectNewCleanSegment();
-        segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
+        iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
     }
+    iMapAddress = (currentSegmentIdx << 10) + iMapOffset;
+    iMapAddresses[currentIMapIdx] = iMapAddress;
     files.erase(lfsFileName);
 }
 
@@ -166,10 +169,26 @@ std::string LFS::cat(std::string lfsFileName) {
     return data.str();
 }
 
-/*std::string LFS::display(std::string lfsFileName, int howMany, int start) {
-
-
-  }*/
+std::string LFS::display(std::string lfsFileName, int howMany, int start) {
+	std::string result = "";
+	if (files.find(lfsFileName) != files.end()) {
+		unsigned iNodeAddress = files[lfsFileName];
+		unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+		unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
+		INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+		for (auto blockAddress: iNode.blockAddresses) {
+			if (blockAddress == 0) {
+				break;
+			}
+			unsigned blockSegmentIdx = getSegmentIndexFromAddress(blockAddress);
+			unsigned blockIdx = getBlockIndexFromAddress(blockAddress);
+			result += segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024);
+		}
+	} else {
+		result = "File " + lfsFileName + " does not exitst.";
+	}
+	return result;
+}
 
 void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
 

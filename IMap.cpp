@@ -16,10 +16,6 @@ IMap::IMap(Block& b)
             unsigned address = 0;
             memcpy(&address, &(data[i]), sizeof(address));
             iNodeAddresses[i/4] = address;
-            for (unsigned j = 0; j < sizeof(address); j++) {
-		        // std::cout << "read " << (short)data[j] << " at index " << j << std::endl;
-            	
-            }
             if (address != 0) {
                 freeCount--;
                 currentIdx = i + sizeof(unsigned);
@@ -42,9 +38,8 @@ unsigned IMap::addINodeWithAddress(unsigned address) {
 }
 
 void IMap::updateINodeAddressAtIndex(unsigned address, unsigned index) {
-    for (unsigned i = 0; i < sizeof(address); i++) {
-        data[index + i] = ((char*)&address)[i];
-    }
+    memcpy(&(data[index]), &address, sizeof(address));
+    iNodeAddresses[index/4] = address;
 }
 
 
