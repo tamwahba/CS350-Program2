@@ -18,7 +18,7 @@ Segment::Segment(std::string fileName)
             std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc); 
     } else {
         while (file && currentBlockIdx < maxBlocks) {
-            file >> blocks[currentBlockIdx];
+            file >> blocks[currentBlockIdx++];
         }
     }
     currentBlockIdx = 8;

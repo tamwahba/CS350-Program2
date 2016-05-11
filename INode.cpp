@@ -10,7 +10,6 @@ INode::INode(std::string name)
         for (unsigned i = 0; i <= sizeof(n) && i < blockSize - maxFileBlocks && n[i] != '\0'; i++) {
             data[i] = n[i];
 	        currentIdx = i + 1;
-	        std::cout << "index: " << i << std::endl;
         }
         data[currentIdx++] = '\0'; // add null terminator
         fileSizeIdx = currentIdx; // location of file size (right after file name)
