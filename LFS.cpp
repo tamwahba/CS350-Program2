@@ -204,7 +204,16 @@ unsigned LFS::getSegmentIndexFromAddress(unsigned address) {
     return address >> 10;
 }
 
-unsigned LFS::getImapIndexFromINodeAddress(unsigned index) {
+unsigned LFS::getImapIndexFromINodeAddress(unsigned address) {
+    for(unsigned i = 0; i < iMapAddresses.size(); i++) {
+        unsigned iMapAddress = iMapAddresses[i];
+        unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+        unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+        IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+        for(auto iNodeAddress : iMap.iNodeAddresses) {
+            if(iNodeAddress == address) return i;
+        }
+    }
     return 0;
 }
 
