@@ -1,8 +1,8 @@
 #include "LFS.h"
 
 LFS::LFS()
-    : checkpointFile{"DRIVE/CHECKPOINT_REGION",
-        std::ios::binary | std::ios::in | std::ios::out},
+    : checkpointFile("DRIVE/CHECKPOINT_REGION",
+        std::ios::binary | std::ios::in | std::ios::out),
     isClean(32, true),
     iMapAddresses(40, 0),
     currentIMapIdx{0},
@@ -24,7 +24,9 @@ LFS::LFS()
                 }
             }
             for (unsigned i = 0; i < iMapAddresses.size() && checkpointFile; i++) {
-                checkpointFile.read((char*)&iMapAddresses[i], sizeof(iMapAddresses[i]));
+            	unsigned address = 0;
+                checkpointFile.read((char*)&address, sizeof(address));
+                iMapAddresses[i] = address;
                 if (iMapAddresses[i] != 0) {
                     currentIMapIdx = i;
                 }
@@ -59,9 +61,6 @@ LFS::~LFS() {
     for (auto segment: segments) {
         delete segment;
     }
-}
-
-void LFS::updateClean() {
 }
 
 void LFS::import(std::string& lfsFileName, std::istream& data) {
@@ -117,8 +116,9 @@ void LFS::import(std::string& lfsFileName, std::istream& data) {
 std::string LFS::list() {
     std::stringstream fNames;
     for (auto file: files) {
-        unsigned int segmentIdx = file.second >> 10;
-        unsigned int blockIdx = file.second & 0x3FF;
+    	unsigned iNodeAddress = file.second;
+        unsigned int segmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+        unsigned int blockIdx = getBlockIndexFromAddress(iNodeAddress);
         INode iNode(segments[segmentIdx]->blocks[blockIdx]);
         fNames << file.first << " ";
         fNames << iNode.fileSize;
@@ -181,14 +181,7 @@ void LFS::flush() {
         segment->write();
     }
     // write checkpoint region 
-    for (unsigned i = 0; i < isClean.size(); i++) {
-        bool clean = isClean[i];
-        checkpointFile.write((char*)&clean, sizeof(clean));
-    }
-    for (unsigned i = 0; i < iMapAddresses.size(); i++) {
-        unsigned address = iMapAddresses[i];
-        checkpointFile.write((char*)&address, sizeof(address));
-    }
+    flushCheckpoint();
 }
 
 /*void LFS::clean() {
@@ -212,3 +205,18 @@ void LFS::selectNewCleanSegment() {
 
 }
 
+void LFS::updateClean() {
+
+}
+
+void LFS::flushCheckpoint() {
+    for (unsigned i = 0; i < isClean.size(); i++) {
+        bool clean = isClean[i];
+        checkpointFile.write((char*)&clean, sizeof(clean));
+    }
+    for (unsigned i = 0; i < iMapAddresses.size(); i++) {
+        unsigned address = iMapAddresses[i];
+        std::cout << "write " << i << ": " << address << std::endl;
+        checkpointFile.write((char*)&address, sizeof(address));
+    }
+}

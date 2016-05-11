@@ -9,8 +9,9 @@ INode::INode(std::string name)
         const char* n = name.c_str();
         for (unsigned i = 0; i <= sizeof(n) && i < blockSize - maxFileBlocks && n[i] != '\0'; i++) {
             data[i] = n[i];
+	        currentIdx = i + 1;
+	        std::cout << "index: " << i << std::endl;
         }
-        currentIdx = sizeof(n) + 1;
         data[currentIdx++] = '\0'; // add null terminator
         fileSizeIdx = currentIdx; // location of file size (right after file name)
         currentIdx += sizeof(fileSize); // move data write head to next free byte 
@@ -46,14 +47,10 @@ void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
 }
 
 void INode::writeFileSize() {
-	for (unsigned i = 0; i < sizeof(fileSize); i++) {
-		data[fileSizeIdx + i] = ((char*)&fileSize)[i];
-	}
+    memcpy(&(data[fileSizeIdx]), &fileSize, sizeof(fileSize));
 }
 
 void INode::readFileSize() {
 	fileSizeIdx = fileName.size() + 1;
-	for (unsigned i = 0; i < sizeof(fileSize); i++) {
-		((char*)&fileSize)[i] = data[fileSizeIdx + i];
-	}
+	memcpy(&fileSize, &(data[fileSizeIdx]), sizeof(fileSize));
 }

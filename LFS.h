@@ -42,6 +42,7 @@ class LFS {
         unsigned getImapIndexFromINodeAddress(unsigned address);
         void selectNewCleanSegment();
         void updateClean();
+        void flushCheckpoint();
 };
 
 #endif

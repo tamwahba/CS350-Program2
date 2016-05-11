@@ -7,9 +7,9 @@ Segment::Segment(std::string fileName)
         segmentFileName{fileName},
         file{segmentFileName, std::ios::binary | std::ios::in | std::ios::out},
         blocks{maxBlocks} {
+    Block block;
+    block.overwrite(std::numeric_limits<unsigned char>::max(), 0, 1024);
     for (unsigned i = 0; i < summaryBlockCount; i++) {
-        Block block;
-        block.overwrite(std::numeric_limits<unsigned char>::max(), 0, 1024);
         blocks[i] = block;
     }
     if (!file) {
