@@ -154,11 +154,8 @@ std::string LFS::cat(std::string lfsFileName) {
     unsigned blockIdx = getBlockIndexFromAddress(iNodeAddress);
     INode iNode(segments[segmentIdx]->blocks[blockIdx]);
     unsigned i = 0;
-    while(iNode.data[i] != '\0') i++; //Scanning past filename
-    while(iNode.data[i] == '\0') i++; //Scanning to file size
-    unsigned numBlocks = 0;
-    i -= 3;
-    for(int j = 6; j >= 0; j -= 2) numBlocks += (iNode.data[i++] << j);
+    while(iNode.data[i++] != '\0') ; //Scanning past filename
+    unsigned numBlocks = iNode.data[i++];
     for(unsigned j = 0; j < numBlocks; j++) {
         unsigned dataBlockAdd = 0; 
         for(int k = 6; k >= 0; k -= 2) {
