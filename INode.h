@@ -23,7 +23,7 @@ class INode : public Block {
     private:
         unsigned fileSizeIdx;
         unsigned currentIdx;
-        unsigned maxFileBlocks = 128;
+        const unsigned maxFileBlocks = 128 * sizeof(unsigned);
 
         void writeFileSize();
         void readFileSize();
