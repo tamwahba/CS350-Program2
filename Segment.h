@@ -19,7 +19,8 @@ class Segment {
         unsigned addBlock(INode& block, unsigned index);
         unsigned addBlock(IMap& block, unsigned index);
         
-        // unsigned deadBlockCount(LFS& fileSystem);
+       	unsigned emptyBlockCount();
+       	bool isEmpty();
         void write();
         
     private:

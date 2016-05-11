@@ -45,6 +45,26 @@ Segment::~Segment() {
     file.close();
 }
 
+unsigned Segment::emptyBlockCount() {
+    unsigned emptyCount = 0;
+    for (unsigned i = 0; i < summaryBlockCount; i++) {
+        for (unsigned j = 0; j < Block::blockSize; j += sizeof(unsigned) * 2) {
+            unsigned blockStatus = blocks[i].readUnsignedAtIndex(j);
+            unsigned iNodeStatus = blocks[i].readUnsignedAtIndex(j + sizeof(unsigned));
+            if (blockStatus == std::numeric_limits<unsigned>::max()
+                && iNodeStatus == std::numeric_limits<unsigned>::max()) {
+                emptyCount++;
+            }
+        }
+    }
+    return emptyCount;
+}
+
+bool Segment::isEmpty() {
+    return emptyBlockCount() == maxBlocks;
+}
+
+
 void Segment::write() {
     for (auto block: blocks) {
         file << block;

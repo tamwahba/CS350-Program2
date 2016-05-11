@@ -237,7 +237,11 @@ unsigned LFS::getImapIndexFromINodeAddress(unsigned address) {
 }
 
 void LFS::selectNewCleanSegment() {
-
+	if (segments[currentSegmentIdx + 1]->isEmpty()) {
+		currentSegmentIdx += 1;
+	} else {
+		// clean up then select new segment
+	}
 }
 
 void LFS::updateClean() {
