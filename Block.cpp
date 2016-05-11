@@ -21,8 +21,18 @@ void Block::overwrite(char character, unsigned start, unsigned size) {
 	}
 }
 
+void Block::overwrite(void* characters, unsigned start, unsigned size) {
+	memcpy(&(data[start]), characters, size);
+}
+
 std::string Block::getStringOfLength(unsigned lengthBytes) {
 	return std::string(data, lengthBytes);
+}
+
+unsigned Block::readUnsignedAtIndex(unsigned index) {
+	unsigned result = 0;
+	memcpy(&result, &(data[index]), sizeof(unsigned));
+	return result;
 }
 
 

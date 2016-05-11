@@ -1,6 +1,7 @@
 #ifndef _BLOCK_H_
 #define _BLOCK_H_
 
+#include <cstring>
 #include <string>
 #include <iostream>
 
@@ -11,13 +12,15 @@ class Block {
         ~Block();
 
         void overwrite(char character, unsigned start, unsigned size);
+        void overwrite(void* characters, unsigned start, unsigned size);
         std::string getStringOfLength(unsigned lengthBytes);
+        unsigned readUnsignedAtIndex(unsigned index);
 
         Block& operator=(const Block& other);
         friend std::istream& operator>>(std::istream& input, Block& block);
         friend std::ostream& operator<<(std::ostream& output, const Block& block);
 
-        const unsigned blockSize = 1024;
+        static const unsigned blockSize = 1024;
 
     public:
         char* data;
