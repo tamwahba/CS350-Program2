@@ -39,12 +39,12 @@ LFS::LFS()
             checkpointFile.seekg(0, std::ios::beg);
             // read filenames
             for (unsigned i = 0; i <= currentIMapIdx; i++) {
-                unsigned iMapAddress = iMapAddresses[i];
+                unsigned iMapAddress = iMapAddresses[currentIMapIdx];
                 unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
                 unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
                 IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
-                for (unsigned j = 0; j < iMap.iNodeAddresses.size(); j++) {
-                    unsigned iNodeAddress = iMap.iNodeAddresses[j];
+                for (unsigned i = 0; i < iMap.iNodeAddresses.size(); i++) {
+                    unsigned iNodeAddress = iMap.iNodeAddresses[i];
                     if (iNodeAddress != 0) {
                         unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
                         unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
@@ -131,19 +131,17 @@ void LFS::remove(std::string& lfsFileName) {
     unsigned iNodeAddress = files[lfsFileName];
     unsigned iMapIndex = getImapIndexFromINodeAddress(iNodeAddress);
     unsigned iMapAddress = iMapAddresses[iMapIndex];
-    unsigned iMapSegmentIndex = getSegmentIndexFromAddress(iMapAddress);
-    unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
-    IMap iMap(segments[iMapSegmentIndex]->blocks[iMapBlockIdx]);
-    unsigned iNodeIndex = iMap.getIndexForINodeAddress(iNodeAddress);
-    iMap.removeINodeAtIndex(iNodeIndex);
-    
+    unsigned segmentIndex = getSegmentIndexFromAddress(iMapAddress);
+    unsigned blockIndex = getBlockIndexFromAddress(iMapAddress);
+    IMap iMap(segments[segmentIndex]->blocks[blockIndex]);
+    iMap.removeINodeAtIndex(getBlockIndexFromAddress(iNodeAddress));
     unsigned iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
     if (iMapOffset == 0) {
         selectNewCleanSegment();
         iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
     }
     iMapAddress = (currentSegmentIdx << 10) + iMapOffset;
-    iMapAddresses[iMapIndex] = iMapAddress;
+    iMapAddresses[currentIMapIdx] = iMapAddress;
     files.erase(lfsFileName);
 }
 
@@ -181,8 +179,7 @@ std::string LFS::display(std::string lfsFileName, int howMany, int start) {
 			}
 			unsigned blockSegmentIdx = getSegmentIndexFromAddress(blockAddress);
 			unsigned blockIdx = getBlockIndexFromAddress(blockAddress);
-			result += 
-				segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024) + '\n';
+			result += segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024);
 		}
 	} else {
 		result = "File " + lfsFileName + " does not exitst.";
@@ -195,12 +192,14 @@ void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
     unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
     unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
     INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+    std::cout << "Got INode from " << iNodeAddress << std::endl;
 
     unsigned iMapIndex = getImapIndexFromINodeAddress(iNodeAddress);
     unsigned iMapAddress = iMapAddresses[iMapIndex];
     unsigned iMapSegmentIndex = getSegmentIndexFromAddress(iMapAddress);
     unsigned iMapBlockIndex = getBlockIndexFromAddress(iMapAddress);
     IMap iMap(segments[iMapSegmentIndex]->blocks[iMapBlockIndex]);
+    std::cout << "GotIMap from " << iMapAddress << std::endl;
 
     unsigned iNodeIndex = 0;
     for(int i = 0; i < iMap.iNodeAddresses.size(); i++) {
@@ -209,11 +208,9 @@ void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
     }
 
     unsigned i = 0;
-    while(iNode.data[i] != '\0') i++; //Scanning past filename
-    while(iNode.data[i] == '\0') i++; //Scanning to file size
-    unsigned numBlocks = 0;
-    i -= 3;
-    for(int j = 6; j >= 0; j -= 2) numBlocks += (iNode.data[i++] << j);
+    while(iNode.data[i++] != '\0') ; //Scanning past filename
+    unsigned numBlocks = iNode.data[i++];
+    std::cout << "File has " << numBlocks << " blocks" << std::endl;
 
     int numBlocksRem = numBlocks;
     int howManyRem = howMany;
@@ -223,7 +220,8 @@ void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
 
     //Don't need to create new data block or update INode
     while(remStart > 1023 && numBlocksRem > 0) {
-        std::cout << "Scanning past block not to be changed at " << workingBlockIndex << std::endl;
+        std::cout << "Scanning past block not to be changed at "
+            << workingBlockIndex << std::endl;
         remStart -= 1024;
         numBlocksRem--;
         workingBlockIndex++;
@@ -241,8 +239,10 @@ void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
                 dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
         }
         unsigned blockAddress = (currentSegmentIdx << 10) + blockOffset;
-        iNode.updateBlockAddressAtIndex(blockAddress, workingBlockIndex);
-        
+        if(workingBlockIndex <= numBlocks) 
+            iNode.addBlockAddress(blockAddress);
+        else
+            iNode.updateBlockAddressAtIndex(blockAddress, workingBlockIndex); 
         remStart -= 1024;
         workingBlockIndex++;
     }
@@ -250,27 +250,55 @@ void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
     while(howManyRem > 0) {
         std::cout << "Creating changed block at " << workingBlockIndex << std::endl;
         unsigned workingBitIndex = 0;
-        Block dataBlock;
+        Block newDataBlock;
+        
+        unsigned oldDataBlockAdd = 0;
+        for(int j = 6; j >= 0; j -= 2) {
+            oldDataBlockAdd += (iNode.data[i++] << j);
+        }
+        unsigned oldDataSegIdx = 
+            getSegmentIndexFromAddress(oldDataBlockAdd);
+        unsigned oldDataBlockIdx =
+            getBlockIndexFromAddress(oldDataBlockAdd);
+        
         while(remStart > 0) {
-            dataBlock.data[workingBitIndex++] = '\0';
+            //std::cout << "Copying old data until start" << std::endl;
+            if(workingBlockIndex <= numBlocks)
+                newDataBlock.data[workingBitIndex] = 
+                    segments[oldDataSegIdx]->blocks[oldDataBlockIdx].
+                    data[workingBitIndex];
+            else 
+                newDataBlock.data[workingBitIndex] = '\0';
+            workingBitIndex++;
             remStart--;
         }
         while(workingBitIndex <= 1024 && howManyRem >= 0) {
-            dataBlock.data[workingBitIndex++] = c;
+            //std::cout << "replacing data in howMany" << std::endl;
+            newDataBlock.data[workingBitIndex++] = c;
             howManyRem--;
         }
         while(workingBitIndex <= 1024) {
-            dataBlock.data[workingBitIndex++] = '\0';
+            //std::cout << "Copying old data after start" << std::endl;
+            if(workingBlockIndex <= numBlocks)
+                newDataBlock.data[workingBitIndex] = 
+                    segments[oldDataSegIdx]->blocks[oldDataBlockIdx].
+                    data[workingBitIndex];
+            else 
+                newDataBlock.data[workingBitIndex] = '\0';
+            workingBitIndex++;
+            remStart--;    
         }
         unsigned blockOffset = segments[currentSegmentIdx]->addBlock(
-                dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
+                newDataBlock, iNode.fileSize, iMap.getNextINodeIndex());
         if (blockOffset == 0) {
             selectNewCleanSegment();
             blockOffset = segments[currentSegmentIdx]->addBlock(
-            dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
+                newDataBlock, iNode.fileSize, iMap.getNextINodeIndex());
         }
         unsigned blockAddress = (currentSegmentIdx << 10) + blockOffset;
-        iNode.updateBlockAddressAtIndex(blockAddress, workingBlockIndex);
+        if(workingBlockIndex <= numBlocks) {
+            iNode.updateBlockAddressAtIndex(blockAddress, workingBlockIndex);
+        } else iNode.addBlockAddress(blockAddress);        
         numBlocksRem--;
         workingBlockIndex++;
     }
