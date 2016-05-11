@@ -49,6 +49,8 @@ unsigned INode::addBlockAddress(unsigned address) {
 }
 
 void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
+    index = fileSizeIdx + sizeof(fileSize) 
+        + (index * sizeof(unsigned));
     memcpy(&(data[index]), &address, sizeof(address));
     blockAddresses[index/4] = address;
 }

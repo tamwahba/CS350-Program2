@@ -194,7 +194,115 @@ std::string LFS::display(std::string lfsFileName, int howMany, int start) {
 }
 
 void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
+    unsigned iNodeAddress = files[lfsFileName];
+    unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+    unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
+    INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
 
+    unsigned iMapIndex = getImapIndexFromINodeAddress(iNodeAddress);
+    unsigned iMapAddress = iMapAddresses[iMapIndex];
+    unsigned iMapSegmentIndex = getSegmentIndexFromAddress(iMapAddress);
+    unsigned iMapBlockIndex = getBlockIndexFromAddress(iMapAddress);
+    IMap iMap(segments[iMapSegmentIndex]->blocks[iMapBlockIndex]);
+
+    unsigned iNodeIndex = 0;
+    for(int i = 0; i < iMap.iNodeAddresses.size(); i++) {
+        if(iMap.iNodeAddresses[i] == iNodeAddress)
+            iNodeIndex = i;
+    }
+
+    unsigned i = 0;
+    while(iNode.data[i] != '\0') i++; //Scanning past filename
+    while(iNode.data[i] == '\0') i++; //Scanning to file size
+    unsigned numBlocks = 0;
+    i -= 3;
+    for(int j = 6; j >= 0; j -= 2) numBlocks += (iNode.data[i++] << j);
+
+    int numBlocksRem = numBlocks;
+    int howManyRem = howMany;
+    int remStart = start;
+    int workingBlockIndex = 0;
+
+
+    //Don't need to create new data block or update INode
+    while(remStart > 1023 && numBlocksRem > 0) {
+        std::cout << "Scanning past block not to be changed at " << workingBlockIndex << std::endl;
+        remStart -= 1024;
+        numBlocksRem--;
+        workingBlockIndex++;
+    }
+
+    //Create new data blocks until start point is within next block
+    while(remStart > 1023) {
+        std::cout << "Creating new empty block until start" << std::endl;
+        Block dataBlock;
+        unsigned blockOffset = segments[currentSegmentIdx]->addBlock(
+                dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
+        if (blockOffset == 0) {
+            selectNewCleanSegment();
+            blockOffset = segments[currentSegmentIdx]->addBlock(
+                dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
+        }
+        unsigned blockAddress = (currentSegmentIdx << 10) + blockOffset;
+        iNode.updateBlockAddressAtIndex(blockAddress, workingBlockIndex);
+        
+        remStart -= 1024;
+        workingBlockIndex++;
+    }
+
+    while(howManyRem > 0) {
+        std::cout << "Creating changed block at " << workingBlockIndex << std::endl;
+        unsigned workingBitIndex = 0;
+        Block dataBlock;
+        while(remStart > 0) {
+            dataBlock.data[workingBitIndex++] = '\0';
+            remStart--;
+        }
+        while(workingBitIndex <= 1024 && howManyRem >= 0) {
+            dataBlock.data[workingBitIndex++] = c;
+            howManyRem--;
+        }
+        while(workingBitIndex <= 1024) {
+            dataBlock.data[workingBitIndex++] = '\0';
+        }
+        unsigned blockOffset = segments[currentSegmentIdx]->addBlock(
+                dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
+        if (blockOffset == 0) {
+            selectNewCleanSegment();
+            blockOffset = segments[currentSegmentIdx]->addBlock(
+            dataBlock, iNode.fileSize, iMap.getNextINodeIndex());
+        }
+        unsigned blockAddress = (currentSegmentIdx << 10) + blockOffset;
+        iNode.updateBlockAddressAtIndex(blockAddress, workingBlockIndex);
+        numBlocksRem--;
+        workingBlockIndex++;
+    }
+
+    /*while(numBlocksRem >= 0) {
+        
+    }*/
+    
+    std::cout << "Writing INode" << std::endl;
+    unsigned iNodeOffset = segments[currentSegmentIdx]->addBlock(
+        iNode, iMap.getNextINodeIndex());
+    if (iNodeOffset == 0) {
+        selectNewCleanSegment();
+        iNodeOffset = segments[currentSegmentIdx]->addBlock(
+            iNode, iMap.getNextINodeIndex());
+    }
+    iNodeAddress = (currentSegmentIdx << 10) + iNodeOffset;
+    iMap.updateINodeAddressAtIndex(iNodeAddress, iNodeIndex);
+
+    std::cout << "Writing IMap" << std::endl;
+    unsigned iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, currentIMapIdx);
+    if (iMapOffset == 0) {
+        selectNewCleanSegment();
+        iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, currentIMapIdx);
+    }
+    iMapAddress = (currentSegmentIdx << 10) + iMapOffset;
+    iMapAddresses[currentIMapIdx] = iMapAddress;
+
+    files[lfsFileName] = iNodeAddress;
 }
 
 void LFS::flush() {
