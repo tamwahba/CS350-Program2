@@ -40,8 +40,15 @@ unsigned INode::addBlockAddress(unsigned address) {
 }
 
 void INode::updateBlockAddressAtIndex(unsigned address, unsigned index) {
-    for (unsigned i = 0; i < sizeof(address); i++) {
-        data[index + i] = ((char*)&address)[i];
+    unsigned fileNameOffset = 0;
+    //Scanning to file size
+    while(data[fileNameOffset] != '\0') fileNameOffset++;
+    while(data[fileNameOffset] == '\0') fileNameOffset++;
+    //Scanning to first address
+    while(data[fileNameOffset] != '\0') fileNameOffset++;
+    fileNameOffset += 3;
+    for (unsigned i = 0; i < 4; i++) {
+        data[(4 * index) + i + fileNameOffset] = ((char*)&address)[i];
     }
 }
 
