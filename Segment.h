@@ -5,7 +5,6 @@
 #include <vector>
 #include <limits>
 
-#include "SummaryBlock.h"
 #include "Block.h"
 #include "INode.h"
 #include "IMap.h"
