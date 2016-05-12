@@ -65,6 +65,13 @@ LFS::~LFS() {
 }
 
 void LFS::import(std::string& lfsFileName, std::istream& data) {
+
+    auto fileiter = files.find(lfsFileName);
+
+    if (fileiter == files.end())
+    {
+        std::cout << "No such file: " << lfsFileName << std::endl;
+    }
     unsigned iMapAddress = iMapAddresses[currentIMapIdx];
     unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
     unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
