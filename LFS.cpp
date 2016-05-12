@@ -337,22 +337,38 @@ void LFS::clean(unsigned numToClean) {
             nonEmptyIndices.push_back(i);
         }
     }
-    for (unsigned i = 0; i < nonEmptyIndices.size() && i < numToClean; i++) {
-        cleanSegmentAtIndex(nonEmptyIndices[i]);
-        // find segment with most empty blocks
-        Segment* currentSegment = segments[nonEmptyIndices[i]];
+    unsigned numCleaned = 0;
+    unsigned numFull = 0;
+    while (numCleaned < numToClean || numFull == numToClean - 1) {
         unsigned emptyCount = 0;
         unsigned mostEmptyIdx = 0;
-        for (unsigned j = 0; j < i; j++) {
+        for (unsigned i = 0; i < nonEmptyIndices.size(); i++) {
             unsigned currentEmptyCount =
-                segments[nonEmptyIndices[j]]->emptyBlockCount();
-            if (currentEmptyCount < emptyCount) {
+                segments[nonEmptyIndices[i]]->emptyBlockCount();
+            if (emptyCount < currentEmptyCount) {
                 emptyCount = currentEmptyCount;
-                mostEmptyIdx = nonEmptyIndices[j];
+                mostEmptyIdx = nonEmptyIndices[i];
             }
         }
-        if (currentSegment->emptyBlockCount() + emptyCount >= 1024) {
-            combineSegments(nonEmptyIndices[i], mostEmptyIdx);
+
+        unsigned fillCount = 1024;
+        unsigned mostFullIdx = 0;
+        for (unsigned i = 0; i < nonEmptyIndices.size(); i++) {
+            unsigned currentEmptyCount =
+                segments[nonEmptyIndices[i]]->emptyBlockCount();
+            if (fillCount < currentEmptyCount) {
+                fillCount = currentEmptyCount;
+                mostFullIdx = nonEmptyIndices[i];
+            }
+        }
+
+        combineSegments(mostFullIdx, mostEmptyIdx);
+        if (segments[mostEmptyIdx]->isEmpty()) {
+            nonEmptyIndices.erase(nonEmptyIndices.begin() + mostEmptyIdx);
+            numCleaned++;
+        }
+        if (segments[mostFullIdx]->emptyBlockCount() == 0) {
+            numFull++;
         }
     }
 }
@@ -400,10 +416,12 @@ void LFS::selectNewCleanSegment(bool recursion) {
         }
         // no clean segment, must clean then repeat process
         if (!recursion && !foundClean) {
-            // TODO - call clean()
+            clean(32);
             selectNewCleanSegment(true);
         } else if (!foundClean) {
             // PANIC no clean segments and can't clean
+        } else {
+            // check remaining clean and clean if needed
         }
     }
 }
