@@ -23,6 +23,7 @@ class Segment {
         unsigned emptyBlockCount();
        	void setBlockEmptyAtIndex(unsigned index);
        	bool isEmpty();
+        bool isEmptyAtIndex(unsigned index);
         void write();
         
     private:

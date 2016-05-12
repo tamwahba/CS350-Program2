@@ -84,6 +84,11 @@ bool Segment::isEmpty() {
     return emptyBlockCount() == maxBlocks;
 }
 
+bool Segment::isEmptyAtIndex(unsigned index) {
+    return getINodeStatusForBlockAtIndex(index) == std::numeric_limits<unsigned>::max()
+        && getBlockStatusForBlockAtIndex(index) == std::numeric_limits<unsigned>::max();
+}
+
 
 void Segment::write() {
     for (auto block: blocks) {
