@@ -53,9 +53,9 @@ unsigned Segment::getBlockStatusForBlockAtIndex(unsigned index) {
 
 unsigned Segment::getINodeStatusForBlockAtIndex(unsigned index) {
     unsigned summaryBlockIdx = index / Block::blockSize;
-    unsigned summaryBlockBlockOffset = index % Block::blockSize;
+    unsigned summaryBlockINodeOffset = index % Block::blockSize + sizeof(unsigned);
     return blocks[summaryBlockIdx].readUnsignedAtIndex(
-        summaryBlockBlockOffset + sizeof(unsigned));
+        summaryBlockINodeOffset + sizeof(unsigned));
 }
 
 unsigned Segment::emptyBlockCount() {
@@ -71,6 +71,13 @@ unsigned Segment::emptyBlockCount() {
         }
     }
     return emptyCount;
+}
+
+void Segment::setBlockEmptyAtIndex(unsigned index) {
+    unsigned summaryBlockIdx = index / Block::blockSize;
+    unsigned summaryBlockBlockOffset = index % Block::blockSize;
+    blocks[summaryBlockIdx].overwrite(
+        std::numeric_limits<unsigned char>::max(), summaryBlockBlockOffset, sizeof(unsigned) * 2);
 }
 
 bool Segment::isEmpty() {
