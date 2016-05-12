@@ -570,6 +570,7 @@ unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
     Segment* segment = segments[index];
     unsigned deadCount = 0;
     for (unsigned i = 0; i < 1024 - 8; i++) {
+        std::cout << "Looking at block " << i << std::endl;
         unsigned currentBlockAddress = (index << 10) + i;
 
         unsigned blockIndexInINode = segment->getBlockStatusForBlockAtIndex(i);
@@ -577,10 +578,12 @@ unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
         if (blockIndexInINode == std::numeric_limits<unsigned>::max()
                 && iNodeIndexInIMap == std::numeric_limits<unsigned>::max()) {
             // block is empty
+            std::cout << "Block is empty" << std::endl;
             deadCount++;
             continue;
         } else if (iNodeIndexInIMap == 10 * 1024) {
             // block is imap
+            std::cout << "Block is an IMap" << std::endl;
             unsigned iMapAddress = iMapAddresses[blockIndexInINode];
 
             if (currentBlockAddress != iMapAddress) {
@@ -588,6 +591,7 @@ unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
             }
         } else if (blockIndexInINode == 128) {
             // block is inode
+            std::cout << "Block is an INode" << std::endl;
             unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
             unsigned iMapAddress = iMapAddresses[iMapIndex]; 
             unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
@@ -601,17 +605,21 @@ unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
             }
         } else {
             // block is data
+            std::cout << "Block is data" << std::endl;
             unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
             unsigned iMapAddress = iMapAddresses[iMapIndex];
             unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
             unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
 
+            std::cout << "Getting IMap" << std::endl;
             IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
             unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInIMap];
             unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
             unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
 
+            std::cout << "Getting INode" << std::endl;
             INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+            std::cout << "Getting block address" << std::endl;
             unsigned blockAddress = iNode.blockAddresses[blockIndexInINode];
 
             if (currentBlockAddress != blockAddress) {
