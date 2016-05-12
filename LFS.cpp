@@ -338,40 +338,32 @@ void LFS::flush() {
 }
 
 void LFS::clean(unsigned numToClean) {
-    std::vector<unsigned> nonEmptyIndices;
-    for (unsigned i = 0; i < segments.size(); i++) {
-        if (!segments[i]->isEmpty()) {
-            nonEmptyIndices.push_back(i);
-        }
-    }
     unsigned numCleaned = 0;
     unsigned numFull = 0;
     while (numCleaned < numToClean || numFull == numToClean - 1) {
         unsigned emptyCount = 0;
         unsigned mostEmptyIdx = 0;
-        for (unsigned i = 0; i < nonEmptyIndices.size(); i++) {
-            unsigned currentEmptyCount =
-                segments[nonEmptyIndices[i]]->emptyBlockCount();
-            if (emptyCount < currentEmptyCount) {
-                emptyCount = currentEmptyCount;
-                mostEmptyIdx = nonEmptyIndices[i];
+        for (unsigned i = 0; i < segments.size(); i++) {
+            unsigned currentDeadCount = countDeadBlocksForSegmentAtIndex(i);
+            if (emptyCount < currentDeadCount) {
+                emptyCount = currentDeadCount;
+                mostEmptyIdx = i;
             }
         }
 
         unsigned fillCount = 1024;
-        unsigned mostFullIdx = 0;
-        for (unsigned i = 0; i < nonEmptyIndices.size(); i++) {
-            unsigned currentEmptyCount =
-                segments[nonEmptyIndices[i]]->emptyBlockCount();
-            if (fillCount < currentEmptyCount) {
-                fillCount = currentEmptyCount;
-                mostFullIdx = nonEmptyIndices[i];
+        unsigned mostFullIdx = 1;
+        for (unsigned i = 0; i < segments.size(); i++) {
+            unsigned currentDeadCount = countDeadBlocksForSegmentAtIndex(i);
+            if (fillCount < currentDeadCount) {
+                fillCount = currentDeadCount;
+                mostFullIdx = i;
             }
         }
 
         combineSegments(mostFullIdx, mostEmptyIdx);
         if (segments[mostEmptyIdx]->isEmpty()) {
-            nonEmptyIndices.erase(nonEmptyIndices.begin() + mostEmptyIdx);
+            segments.erase(segments.begin() + mostEmptyIdx);
             numCleaned++;
         }
         if (segments[mostFullIdx]->emptyBlockCount() == 0) {
@@ -437,8 +429,67 @@ void LFS::cleanSegmentAtIndex(unsigned index) {
 
 }
 
-void LFS::combineSegments(unsigned firstIndex, unsigned secondIndex) {
+void LFS::combineSegments(unsigned fullIndex, unsigned emptyIndex) {
+    Segment* fullSegment = segments[fullIndex];
+    Segment* emptySegment = segments[emptyIndex];
 
+}
+
+unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
+    Segment* segment = segments[index];
+    unsigned deadCount = 0;
+    for (unsigned i = 0; i < 1024 - 8; i++) {
+        unsigned currentBlockAddress = (index << 10) + i;
+
+        unsigned blockIndexInINode = segment->getBlockStatusForBlockAtIndex(i);
+        unsigned iNodeIndexInInIMap = segment->getINodeStatusForBlockAtIndex(i);
+        if (blockIndexInINode == std::numeric_limits<unsigned>::max()
+                && iNodeIndexInInIMap == std::numeric_limits<unsigned>::max()) {
+            // block is empty
+            deadCount++;
+            continue;
+        } else if (iNodeIndexInInIMap == 10 * 1024) {
+            // block is imap
+            unsigned iMapAddress = iMapAddresses[blockIndexInINode];
+
+            if (currentBlockAddress != iMapAddress) {
+                deadCount++;
+            }
+        } else if (blockIndexInINode == 128) {
+            // block is inode
+            unsigned iMapIndex = iNodeIndexInInIMap % iMapAddresses.size();
+            unsigned iMapAddress = iMapAddresses[iMapIndex]; 
+            unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+            unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+
+            IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInInIMap];
+
+            if (currentBlockAddress != iNodeAddress) {
+                deadCount++;
+            }
+        } else {
+            // block is data
+            unsigned iMapIndex = iNodeIndexInInIMap % iMapAddresses.size();
+            unsigned iMapAddress = iMapAddresses[iMapIndex];
+            unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+            unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+
+            IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInInIMap];
+            unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+            unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
+
+            INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+            unsigned blockAddress = iNode.blockAddresses[blockIndexInINode];
+
+            if (currentBlockAddress != blockAddress) {
+                deadCount++;
+            }
+        }
+
+    }
+    return deadCount;
 }
 
 void LFS::flushCheckpoint() {

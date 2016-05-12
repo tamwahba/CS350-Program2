@@ -45,6 +45,19 @@ Segment::~Segment() {
     file.close();
 }
 
+unsigned Segment::getBlockStatusForBlockAtIndex(unsigned index) {
+    unsigned summaryBlockIdx = index / Block::blockSize;
+    unsigned summaryBlockBlockOffset = index % Block::blockSize;
+    return blocks[summaryBlockIdx].readUnsignedAtIndex(summaryBlockBlockOffset);
+}
+
+unsigned Segment::getINodeStatusForBlockAtIndex(unsigned index) {
+    unsigned summaryBlockIdx = index / Block::blockSize;
+    unsigned summaryBlockBlockOffset = index % Block::blockSize;
+    return blocks[summaryBlockIdx].readUnsignedAtIndex(
+        summaryBlockBlockOffset + sizeof(unsigned));
+}
+
 unsigned Segment::emptyBlockCount() {
     unsigned emptyCount = 0;
     for (unsigned i = 0; i < summaryBlockCount; i++) {

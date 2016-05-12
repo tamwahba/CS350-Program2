@@ -18,6 +18,8 @@ class Segment {
         unsigned addBlock(INode& block, unsigned index);
         unsigned addBlock(IMap& block, unsigned index);
         
+        unsigned getBlockStatusForBlockAtIndex(unsigned index);
+        unsigned getINodeStatusForBlockAtIndex(unsigned index);
        	unsigned emptyBlockCount();
        	bool isEmpty();
         void write();

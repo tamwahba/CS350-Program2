@@ -3,9 +3,10 @@
 
 #include <iostream>
 #include <fstream>
+#include <limits>
+#include <map>
 #include <sstream>
 #include <string>
-#include <map>
 #include <vector>
 
 #include "Segment.h"
@@ -42,7 +43,8 @@ class LFS {
         unsigned getImapIndexFromINodeAddress(unsigned address);
         void selectNewCleanSegment(bool recursion = false);
         void cleanSegmentAtIndex(unsigned index);
-        void combineSegments(unsigned firstIndex, unsigned secondIndex);
+        void combineSegments(unsigned fullIndex, unsigned emptyIndex);
+        unsigned countDeadBlocksForSegmentAtIndex(unsigned address);
         void updateClean();
         void flushCheckpoint();
 };
