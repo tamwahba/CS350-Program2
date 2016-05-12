@@ -65,6 +65,13 @@ LFS::~LFS() {
 }
 
 void LFS::import(std::string& lfsFileName, std::istream& data) {
+
+    auto fileiter = files.find(lfsFileName);
+
+    if (fileiter == files.end())
+    {
+        std::cout << "No such file: " << lfsFileName << std::endl;
+    }
     unsigned iMapAddress = iMapAddresses[currentIMapIdx];
     unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
     unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
@@ -334,10 +341,48 @@ void LFS::flush() {
     flushCheckpoint();
 }
 
-/*void LFS::clean() {
+void LFS::clean(unsigned numToClean) {
+    std::vector<unsigned> nonEmptyIndices;
+    for (unsigned i = 0; i < segments.size(); i++) {
+        if (!segments[i]->isEmpty()) {
+            nonEmptyIndices.push_back(i);
+        }
+    }
+    unsigned numCleaned = 0;
+    unsigned numFull = 0;
+    while (numCleaned < numToClean || numFull == numToClean - 1) {
+        unsigned emptyCount = 0;
+        unsigned mostEmptyIdx = 0;
+        for (unsigned i = 0; i < nonEmptyIndices.size(); i++) {
+            unsigned currentEmptyCount =
+                segments[nonEmptyIndices[i]]->emptyBlockCount();
+            if (emptyCount < currentEmptyCount) {
+                emptyCount = currentEmptyCount;
+                mostEmptyIdx = nonEmptyIndices[i];
+            }
+        }
 
+        unsigned fillCount = 1024;
+        unsigned mostFullIdx = 0;
+        for (unsigned i = 0; i < nonEmptyIndices.size(); i++) {
+            unsigned currentEmptyCount =
+                segments[nonEmptyIndices[i]]->emptyBlockCount();
+            if (fillCount < currentEmptyCount) {
+                fillCount = currentEmptyCount;
+                mostFullIdx = nonEmptyIndices[i];
+            }
+        }
 
-  }*/
+        combineSegments(mostFullIdx, mostEmptyIdx);
+        if (segments[mostEmptyIdx]->isEmpty()) {
+            nonEmptyIndices.erase(nonEmptyIndices.begin() + mostEmptyIdx);
+            numCleaned++;
+        }
+        if (segments[mostFullIdx]->emptyBlockCount() == 0) {
+            numFull++;
+        }
+    }
+}
 
 unsigned LFS::getBlockIndexFromAddress(unsigned address) {
     return address & 0x3FF;
@@ -382,15 +427,21 @@ void LFS::selectNewCleanSegment(bool recursion) {
         }
         // no clean segment, must clean then repeat process
         if (!recursion && !foundClean) {
-            // TODO - call clean()
+            clean(32);
             selectNewCleanSegment(true);
         } else if (!foundClean) {
             // PANIC no clean segments and can't clean
+        } else {
+            // check remaining clean and clean if needed
         }
     }
 }
 
-void LFS::updateClean() {
+void LFS::cleanSegmentAtIndex(unsigned index) {
+
+}
+
+void LFS::combineSegments(unsigned firstIndex, unsigned secondIndex) {
 
 }
 

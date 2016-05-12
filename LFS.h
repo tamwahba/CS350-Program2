@@ -24,7 +24,7 @@ class LFS {
         std::string display(std::string lfsFileName, int howMany, int start);
         void overwrite(std::string lfsFileName, int howMany, int start, char c);
         void flush();
-        //void clean();
+        void clean(unsigned numToClean);
 
     private:
     	std::fstream checkpointFile;
@@ -41,6 +41,8 @@ class LFS {
         unsigned getSegmentIndexFromAddress(unsigned address);
         unsigned getImapIndexFromINodeAddress(unsigned address);
         void selectNewCleanSegment(bool recursion = false);
+        void cleanSegmentAtIndex(unsigned index);
+        void combineSegments(unsigned firstIndex, unsigned secondIndex);
         void updateClean();
         void flushCheckpoint();
 };
