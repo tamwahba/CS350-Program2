@@ -172,24 +172,28 @@ std::string LFS::cat(std::string lfsFileName) {
 }
 
 std::string LFS::display(std::string lfsFileName, int howMany, int start) {
-    std::string result = "";
+    std::stringstream result;
     if (files.find(lfsFileName) != files.end()) {
         unsigned iNodeAddress = files[lfsFileName];
         unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
         unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
         INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
         for (auto blockAddress: iNode.blockAddresses) {
-            if (blockAddress == 0) {
+            if (blockAddress == 0 || howMany < 1) {
                 break;
             }
+
             unsigned blockSegmentIdx = getSegmentIndexFromAddress(blockAddress);
             unsigned blockIdx = getBlockIndexFromAddress(blockAddress);
-            result += segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(1024);
+            unsigned numToPrint = 1024;
+            if(howMany < 1024) numToPrint = howMany;
+            howMany -= numToPrint;
+            result << segments[blockSegmentIdx]->blocks[blockIdx].getFormattedBytesOfLength(numToPrint);
         }
     } else {
-        result = "File " + lfsFileName + " does not exitst.";
+        result << "File " << lfsFileName << " does not exitst.";
     }
-    return result;
+    return result.str();
 }
 
 void LFS::overwrite(std::string lfsFileName, int howMany, int start, char c) {
