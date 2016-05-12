@@ -62,8 +62,8 @@ int main(int argc, char* argv[])
             else std::cout << disk.cat(lfs_filename) << std::endl;
         } else if (command == "display") {
             std::string lfs_filename;
-            int howmany;
-            int start;
+            unsigned howmany;
+            unsigned start;
 
             std::cin >> lfs_filename;
             std::cin >> howmany >> start;
@@ -74,8 +74,8 @@ int main(int argc, char* argv[])
                 std::cout << disk.display(lfs_filename, howmany, start) << std::endl;
         } else if (command == "overwrite") {
             std::string lfs_filename;
-            int howmany;
-            int start;
+            unsigned howmany;
+            unsigned start;
             char c;
 
             std::cin >> lfs_filename;
@@ -85,6 +85,12 @@ int main(int argc, char* argv[])
                 std::cout << "File does not exist" << std::endl;
             else  
                 disk.overwrite(lfs_filename, howmany, start, c);
+        } else if (command == "clean") {
+            unsigned howMany;
+
+            std::cin >> howMany;
+            
+            disk.clean(howMany);
         } else if (command == "exit") {
             disk.flush();
             break;
