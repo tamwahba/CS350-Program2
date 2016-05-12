@@ -126,7 +126,13 @@ std::string LFS::list() {
         unsigned int blockIdx = getBlockIndexFromAddress(iNodeAddress);
         INode iNode(segments[segmentIdx]->blocks[blockIdx]);
         fNames << file.first << " ";
-        fNames << iNode.fileSize;
+        unsigned lastBlockAdd = iNode.blockAddresses.back();
+        unsigned lastSegIdx = getSegmentIndexFromAddress(lastBlockAdd);
+        unsigned lastBlockIdx = getBlockIndexFromAddress(lastBlockAdd);
+        unsigned fileSize = ((iNode.fileSize - 1) * 1024) + 
+            segments[lastSegIdx]->blocks[lastBlockIdx].
+            getFormattedBytesOfLength(1024).size();
+        fNames << fileSize;
         fNames << std::endl;
     }
     return fNames.str();
