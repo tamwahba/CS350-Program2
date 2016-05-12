@@ -142,10 +142,11 @@ void LFS::remove(std::string& lfsFileName) {
     unsigned iNodeAddress = findFile(lfsFileName);
     unsigned iMapIndex = getImapIndexFromINodeAddress(iNodeAddress);
     unsigned iMapAddress = iMapAddresses[iMapIndex];
-    unsigned segmentIndex = getSegmentIndexFromAddress(iMapAddress);
-    unsigned blockIndex = getBlockIndexFromAddress(iMapAddress);
-    IMap iMap(segments[segmentIndex]->blocks[blockIndex]);
-    iMap.removeINodeAtIndex(getBlockIndexFromAddress(iNodeAddress));
+    unsigned iMapSegmentIndex = getSegmentIndexFromAddress(iMapAddress);
+    unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+    IMap iMap(segments[iMapSegmentIndex]->blocks[iMapBlockIdx]);
+    unsigned iNodeIndex = iMap.getIndexForINodeAddress(iNodeAddress);
+    iMap.removeINodeAtIndex(iNodeIndex);
     unsigned iMapOffset = segments[currentSegmentIdx]->addBlock(iMap, iMapIndex);
     if (iMapOffset == 0) {
         selectNewCleanSegment();
@@ -363,7 +364,6 @@ void LFS::clean(unsigned numToClean) {
 
         combineSegments(mostFullIdx, mostEmptyIdx);
         if (segments[mostEmptyIdx]->isEmpty()) {
-            segments.erase(segments.begin() + mostEmptyIdx);
             numCleaned++;
         }
         if (segments[mostFullIdx]->emptyBlockCount() == 0) {
@@ -426,13 +426,144 @@ void LFS::selectNewCleanSegment(bool recursion) {
 }
 
 void LFS::cleanSegmentAtIndex(unsigned index) {
+    Segment* segment = segments[index];
+    for (unsigned i = 0; i < 1024 - 8; i++) {
+        unsigned currentBlockAddress = (index << 10) + i;
 
+        unsigned blockIndexInINode = segment->getBlockStatusForBlockAtIndex(i);
+        unsigned iNodeIndexInIMap = segment->getINodeStatusForBlockAtIndex(i);
+        if (blockIndexInINode == std::numeric_limits<unsigned>::max()
+                && iNodeIndexInIMap == std::numeric_limits<unsigned>::max()) {
+            // block is empty
+            continue;
+        } else if (iNodeIndexInIMap == 10 * 1024) {
+            // block is imap
+            unsigned iMapAddress = iMapAddresses[blockIndexInINode];
+
+            if (currentBlockAddress != iMapAddress) {
+                segment->setBlockEmptyAtIndex(i);
+            }
+        } else if (blockIndexInINode == 128) {
+            // block is inode
+            unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
+            unsigned iMapAddress = iMapAddresses[iMapIndex]; 
+            unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+            unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+
+            IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInIMap];
+
+            if (currentBlockAddress != iNodeAddress) {
+                segment->setBlockEmptyAtIndex(i);
+            }
+        } else {
+            // block is data
+            unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
+            unsigned iMapAddress = iMapAddresses[iMapIndex];
+            unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+            unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+
+            IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInIMap];
+            unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+            unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
+
+            INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+            unsigned blockAddress = iNode.blockAddresses[blockIndexInINode];
+
+            if (currentBlockAddress != blockAddress) {
+                segment->setBlockEmptyAtIndex(i);
+            }
+        }
+    }
 }
 
 void LFS::combineSegments(unsigned fullIndex, unsigned emptyIndex) {
+    cleanSegmentAtIndex(fullIndex);
+    cleanSegmentAtIndex(emptyIndex);
     Segment* fullSegment = segments[fullIndex];
     Segment* emptySegment = segments[emptyIndex];
 
+    unsigned fullSegmentBlockIndex = 0;
+    while (fullSegment->emptyBlockCount() != 3 && !emptySegment->isEmpty()) {
+        while (!fullSegment->isEmptyAtIndex(fullSegmentBlockIndex)) {
+            fullSegmentBlockIndex++;
+        }
+
+        unsigned emptySegmentBlockIndex = 0;
+        while (!emptySegment->isEmptyAtIndex(emptySegmentBlockIndex)) {
+            emptySegmentBlockIndex++;
+        }
+
+        unsigned blockIndexInINode =
+            emptySegment->getBlockStatusForBlockAtIndex(emptySegmentBlockIndex);
+        unsigned iNodeIndexInIMap =
+            emptySegment->getINodeStatusForBlockAtIndex(emptySegmentBlockIndex);
+        if (iNodeIndexInIMap == 10 * 1024) {
+            // block is imap; just copy it
+            IMap iMap(emptySegment->blocks[emptySegmentBlockIndex]);
+            unsigned iMapAddress = (fullIndex << 10) + fullSegment->addBlock(iMap, blockIndexInINode);
+            emptySegment->setBlockEmptyAtIndex(emptySegmentBlockIndex);
+            iMapAddresses[blockIndexInINode] = iMapAddress;
+        } else if (blockIndexInINode == 128) {
+            // block is inode; copy it and update iMap
+            unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
+            unsigned iMapAddress = iMapAddresses[iMapIndex]; 
+            unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+            unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+
+            IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+
+            INode iNode(emptySegment->blocks[emptySegmentBlockIndex]);
+
+            unsigned iNodeAddress = (fullIndex << 10) + fullSegment->addBlock(iNode, iNodeIndexInIMap);
+            emptySegment->setBlockEmptyAtIndex(emptySegmentBlockIndex);
+            iMap.iNodeAddresses[iNodeIndexInIMap] = iNodeAddress;
+            iMapAddress = (fullIndex << 10) + fullSegment->addBlock(iMap, iMapIndex);
+            emptySegment->setBlockEmptyAtIndex(iMapBlockIdx);
+            iMapAddresses[iMapIndex] = iMapAddress;
+        } else {
+            // block is data; copy all other data associated with the same file
+            unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
+            unsigned iMapAddress = iMapAddresses[iMapIndex];
+            unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
+            unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
+
+            IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInIMap];
+            unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
+            unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
+
+            INode iNode(segments[iNodeSegmentIdx]->blocks[iNodeBlockIdx]);
+
+            unsigned currentIndex = emptySegmentBlockIndex;
+            while (currentIndex < 1024 && fullSegment->emptyBlockCount() != 2) {
+                unsigned currentBlockIndexInINode =
+                    emptySegment->getBlockStatusForBlockAtIndex(currentIndex);
+                unsigned currentINodeIndexInIMap =
+                    emptySegment->getINodeStatusForBlockAtIndex(currentIndex);
+                if (currentINodeIndexInIMap != iNodeIndexInIMap) {
+                    continue;
+                }
+
+                unsigned blockAddress = 
+                    (fullIndex << 10) + fullSegment->addBlock(emptySegment->blocks[currentIndex], currentBlockIndexInINode,
+                    currentINodeIndexInIMap);
+                emptySegment->setBlockEmptyAtIndex(currentIndex);
+                iNode.updateBlockAddressAtIndex(blockAddress, currentBlockIndexInINode);
+
+                currentIndex++;
+            }
+
+            iNodeAddress = (fullIndex << 10) + fullSegment->addBlock(iNode, iNodeIndexInIMap);
+            emptySegment->setBlockEmptyAtIndex(iNodeBlockIdx);
+
+            iMap.iNodeAddresses[iNodeIndexInIMap] = iNodeAddress;
+            iMapAddress = (fullIndex << 10) + fullSegment->addBlock(iMap, iMapIndex);
+            emptySegment->setBlockEmptyAtIndex(iMapBlockIdx);
+            iMapAddresses[iMapIndex] = iMapAddress;
+        }
+    }
 }
 
 unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
@@ -442,13 +573,13 @@ unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
         unsigned currentBlockAddress = (index << 10) + i;
 
         unsigned blockIndexInINode = segment->getBlockStatusForBlockAtIndex(i);
-        unsigned iNodeIndexInInIMap = segment->getINodeStatusForBlockAtIndex(i);
+        unsigned iNodeIndexInIMap = segment->getINodeStatusForBlockAtIndex(i);
         if (blockIndexInINode == std::numeric_limits<unsigned>::max()
-                && iNodeIndexInInIMap == std::numeric_limits<unsigned>::max()) {
+                && iNodeIndexInIMap == std::numeric_limits<unsigned>::max()) {
             // block is empty
             deadCount++;
             continue;
-        } else if (iNodeIndexInInIMap == 10 * 1024) {
+        } else if (iNodeIndexInIMap == 10 * 1024) {
             // block is imap
             unsigned iMapAddress = iMapAddresses[blockIndexInINode];
 
@@ -457,26 +588,26 @@ unsigned LFS::countDeadBlocksForSegmentAtIndex(unsigned index) {
             }
         } else if (blockIndexInINode == 128) {
             // block is inode
-            unsigned iMapIndex = iNodeIndexInInIMap % iMapAddresses.size();
+            unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
             unsigned iMapAddress = iMapAddresses[iMapIndex]; 
             unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
             unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
 
             IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
-            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInInIMap];
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInIMap];
 
             if (currentBlockAddress != iNodeAddress) {
                 deadCount++;
             }
         } else {
             // block is data
-            unsigned iMapIndex = iNodeIndexInInIMap % iMapAddresses.size();
+            unsigned iMapIndex = iNodeIndexInIMap % iMapAddresses.size();
             unsigned iMapAddress = iMapAddresses[iMapIndex];
             unsigned iMapSegmentIdx = getSegmentIndexFromAddress(iMapAddress);
             unsigned iMapBlockIdx = getBlockIndexFromAddress(iMapAddress);
 
             IMap iMap(segments[iMapSegmentIdx]->blocks[iMapBlockIdx]);
-            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInInIMap];
+            unsigned iNodeAddress = iMap.iNodeAddresses[iNodeIndexInIMap];
             unsigned iNodeSegmentIdx = getSegmentIndexFromAddress(iNodeAddress);
             unsigned iNodeBlockIdx = getBlockIndexFromAddress(iNodeAddress);
 

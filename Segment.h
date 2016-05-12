@@ -20,8 +20,10 @@ class Segment {
         
         unsigned getBlockStatusForBlockAtIndex(unsigned index);
         unsigned getINodeStatusForBlockAtIndex(unsigned index);
-       	unsigned emptyBlockCount();
+        unsigned emptyBlockCount();
+       	void setBlockEmptyAtIndex(unsigned index);
        	bool isEmpty();
+        bool isEmptyAtIndex(unsigned index);
         void write();
         
     private:
