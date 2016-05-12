@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     while (true)
     {
         std::cout << "> ";
-        
+
         std::string command;
 
         std::cin >> command;
@@ -40,35 +40,39 @@ int main(int argc, char* argv[])
         ///run the command here
         if (command == "import") {
             std::string filename, lfs_filename;
-
             std::cin >> filename >> lfs_filename;
 
             std::ifstream dataStream(filename, std::ios::in | std::ios::binary);
-            disk.import(lfs_filename, dataStream);
-        }
-        else if(command == "remove"){
+            if(!dataStream.good())
+                std::cout << "File does not exist" << std::endl;
+            else disk.import(lfs_filename, dataStream);
+        } else if(command == "remove"){
             std::string lfs_filename;
 
             std::cin >> lfs_filename;
-            disk.remove(lfs_filename);
-        }
-        else if (command == "cat") {
+            if(!disk.findFile(lfs_filename)) 
+                std::cout << "File does not exist" << std::endl;
+            else disk.remove(lfs_filename);
+        } else if (command == "cat") {
             std::string lfs_filename;
 
             std::cin >> lfs_filename;
-            std::string data = disk.cat(lfs_filename);
-            std::cout << data << std::endl;
-        } 
-        else if (command == "display") {
+            if(!disk.findFile(lfs_filename)) 
+                std::cout << "File does not exist" << std::endl;
+            else std::cout << disk.cat(lfs_filename) << std::endl;
+        } else if (command == "display") {
             std::string lfs_filename;
             int howmany;
             int start;
 
             std::cin >> lfs_filename;
             std::cin >> howmany >> start;
-            std::cout << disk.display(lfs_filename, howmany, start) << std::endl;
-        }
-        else if (command == "overwrite") {
+
+            if(!disk.findFile(lfs_filename)) 
+                std::cout << "File does not exist" << std::endl;
+            else 
+                std::cout << disk.display(lfs_filename, howmany, start) << std::endl;
+        } else if (command == "overwrite") {
             std::string lfs_filename;
             int howmany;
             int start;
@@ -76,20 +80,19 @@ int main(int argc, char* argv[])
 
             std::cin >> lfs_filename;
             std::cin >> howmany >> start >> c;
-            disk.overwrite(lfs_filename, howmany, start, c);
 
-        }
-        else if (command == "exit")
-        {
+            if(!disk.findFile(lfs_filename)) 
+                std::cout << "File does not exist" << std::endl;
+            else  
+                disk.overwrite(lfs_filename, howmany, start, c);
+        } else if (command == "exit") {
             disk.flush();
             break;
-        } 
-        else if (command == "list") {
+        } else if (command == "list") {
             std::cout << disk.list() << std::endl;
         } else {
             std::cerr << "Invalid command: " << command << std::endl;
         }
     }
-
     return 0;
 }

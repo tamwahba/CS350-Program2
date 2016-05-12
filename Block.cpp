@@ -42,6 +42,7 @@ std::string Block::getFormattedBytesOfLength(unsigned lengthBytes) {
         }
         result << std::setw(2) << (unsigned)data[i] << ' ';
     }
+    result << std::endl;
     return result.str();
 }
 

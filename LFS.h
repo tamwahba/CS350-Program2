@@ -26,6 +26,7 @@ class LFS {
         void overwrite(std::string lfsFileName, int howMany, int start, char c);
         void flush();
         void clean(unsigned numToClean);
+        int findFile(std::string lfsFileName);
 
     private:
     	std::fstream checkpointFile;
